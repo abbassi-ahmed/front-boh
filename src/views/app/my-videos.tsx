@@ -1,64 +1,181 @@
-"use client";
-
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Tabs, Tab, Card, CardBody, Button } from "@heroui/react";
-import { Clock, CheckCircle } from "lucide-react";
-import VideoUploader from "../../components/video-uploader";
-import VideoPlayer from "../../components/video-player";
-import PlatformContent from "../../components/platform-content";
-import VideoLibrary from "../../components/video-library";
+import axios from "axios";
 
-// Dummy data
-const dummyVideo = {
-  id: "video-1",
-  title: "My Awesome Video",
-  thumbnail: "/placeholder.svg?height=720&width=1280",
-  duration: "3:45",
-  uploadDate: "2023-04-12",
-  url: "https://example.com/video.mp4",
-};
+// Components
+import { formatDuration } from "../../utils/formatDuration";
+import RenderVideoSection from "../../components/renderVideoSection";
+import RenderPlatformTabs from "../../components/RenderPlatformTabs";
+import RenderVideoLibrary from "../../components/renderVideoLibrary";
+import { addToast } from "@heroui/react";
+import { useAxios } from "../../hooks/fetch-api.hook";
 
-const platforms: {
-  key: "youtube" | "tiktok" | "facebook" | "instagram";
+// Types
+export type PlatformKey = "youtube" | "tiktok" | "facebook" | "instagram";
+
+export interface Platform {
+  key: PlatformKey;
   name: string;
   icon: ReactNode;
-}[] = [
-  { key: "youtube", name: "YouTube", icon: <Clock className="w-5 h-5" /> },
-  { key: "tiktok", name: "TikTok", icon: <Clock className="w-5 h-5" /> },
-  { key: "facebook", name: "Facebook", icon: <Clock className="w-5 h-5" /> },
-  { key: "instagram", name: "Instagram", icon: <Clock className="w-5 h-5" /> },
-];
+}
+
+export interface Video {
+  id: string;
+  title: string;
+  duration: string;
+  uploadDate: string;
+  url: string;
+  playbackUrl?: string;
+}
+
+// Constants
+
+const INITIAL_VIDEO_STATE: Video = {
+  id: "user-uploaded",
+  title: "Your Uploaded Video",
+  duration: "0:00",
+  uploadDate: new Date().toLocaleDateString(),
+  url: "",
+};
 
 export default function MyVideos() {
-  const [selectedPlatform, setSelectedPlatform] = useState("youtube");
+  // State
+  const [selectedPlatform, setSelectedPlatform] =
+    useState<PlatformKey>("youtube");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [isVideoUploaded, setIsVideoUploaded] = useState(false);
-  const [uploadedVideo, setUploadedVideo] = useState<{
-    id: string;
-    title: string;
-    duration: string;
-    uploadDate: string;
-    url: File | string;
-  }>({
-    id: "user-uploaded",
-    title: "Your Uploaded Video",
-    duration: "0:00",
-    uploadDate: new Date().toLocaleDateString(),
-    url: "",
-  });
-  const handleUploadSuccess = (file: File) => {
-    setUploadedVideo((prev) => ({
-      ...prev,
-      title: file.name,
-      url: file,
-    }));
-    setIsVideoUploaded(true);
-    // Simulate AI processing
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [generatedContent, setGeneratedContent] = useState<any>(null);
+  const [transcript, setTranscript] = useState<string | null>(null);
+  const [videos, setVideos] = useState<any[]>([]);
+
+  const [uploadedVideo, setUploadedVideo] =
+    useState<Video>(INITIAL_VIDEO_STATE);
+  const { data } = useAxios(`assembly`, "GET", {}, "data", true);
+  useEffect(() => {
+    if (data.responseData) {
+      setVideos(data.responseData);
+    }
+  }, [data.responseData]);
+  const handleGenerateContent = async () => {
+    if (!uploadedVideo.url) {
+      alert("Please upload a video first.");
+      return;
+    }
+
     setIsProcessing(true);
-    setTimeout(() => {
+    try {
+      // Start transcription
+      const transcriptionResponse = await axios.post(
+        "http://localhost:3000/api/assembly/transcribe",
+        {
+          fileUrl: uploadedVideo.url,
+        }
+      );
+      setGeneratedContent(transcriptionResponse.data.result);
+      setTranscript(transcriptionResponse.data.result.transcript);
+    } catch (error) {
+      console.error("Error processing video:", error);
+      alert("Failed to generate transcript. Please try again.");
+    } finally {
       setIsProcessing(false);
-    }, 3000);
+    }
+  };
+
+  const handleSaveContent = async () => {
+    if (!generatedContent) {
+      alert("Please generate content first.");
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+
+      const saveData = {
+        originalAudioUrl: uploadedVideo.url,
+        transcript: generatedContent.transcript,
+        youtube: generatedContent.youtube,
+        facebook: generatedContent.facebook,
+        instagram: generatedContent.instagram,
+        tiktok: generatedContent.tiktok,
+        cross_platform_tips: generatedContent.cross_platform_tips,
+      };
+
+      await axios
+        .post("http://localhost:3000/api/assembly", saveData)
+        .then((res) => {
+          addToast({
+            title: "Saved",
+            description: "Content Saved successfully",
+            color: "success",
+          });
+          data.refreshData();
+        });
+    } catch (error) {
+      console.error("Error saving content:", error);
+      alert("Failed to save content. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const uploadToCloudinary = async (file: File): Promise<Video | null> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "upload-boh");
+    formData.append("cloud_name", "doj3zwmwc");
+
+    try {
+      const res = await axios.post(
+        "https://api.cloudinary.com/v1_1/doj3zwmwc/video/upload",
+        formData,
+        {
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / (progressEvent.total || 1)
+            );
+            setUploadProgress(percentCompleted);
+          },
+        }
+      );
+
+      setUploadProgress(0);
+      return {
+        id: res.data.asset_id,
+        title: file.name,
+        duration: formatDuration(res.data.duration),
+        uploadDate: new Date(res.data.created_at).toLocaleDateString(),
+        url: res.data.secure_url,
+        playbackUrl: res.data.playback_url,
+      };
+    } catch (error) {
+      console.error("Upload failed:", error);
+      setUploadProgress(0);
+      return null;
+    }
+  };
+
+  const handleRemoveVideo = () => {
+    setUploadedVideo(INITIAL_VIDEO_STATE);
+    setIsVideoUploaded(false);
+    setTranscript(null);
+    // Reset any other related state
+  };
+  const handleUploadSuccess = async (file: File) => {
+    setIsProcessing(true);
+
+    const videoData = await uploadToCloudinary(file);
+
+    if (!videoData) {
+      alert("Failed to upload video. Please try again.");
+      setIsProcessing(false);
+      return;
+    }
+
+    setUploadedVideo(videoData);
+    setIsVideoUploaded(true);
+    setIsProcessing(false);
   };
 
   return (
@@ -73,118 +190,28 @@ export default function MyVideos() {
       </motion.h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column - Video Upload/Preview */}
-        <motion.div
-          className="lg:col-span-1"
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <Card className="w-full bg-black">
-            <CardBody className="bg-gradient-to-b from-purple-900/20 to-black">
-              {!isVideoUploaded ? (
-                <VideoUploader onUploadSuccess={handleUploadSuccess} />
-              ) : (
-                <VideoPlayer video={uploadedVideo} />
-              )}
-            </CardBody>
-          </Card>
-
-          {isVideoUploaded && (
-            <motion.div
-              className="mt-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3, delay: 0.5 }}
-            >
-              <Card className="bg-black">
-                <CardBody className="bg-gradient-to-b from-purple-900/20 to-black">
-                  <h3 className="text-lg text-purple-800 dark:text-purple-400 font-semibold mb-2">
-                    Video Details
-                  </h3>
-                  <p className="text-sm text-white dark:text-gray-300">
-                    <span className="font-medium">Duration:</span>{" "}
-                    {uploadedVideo.duration}
-                  </p>
-                  <p className="text-sm text-white dark:text-gray-300">
-                    <span className="font-medium">Uploaded:</span>{" "}
-                    {uploadedVideo.uploadDate}
-                  </p>
-                  <div className="mt-4">
-                    <Button
-                      color="primary"
-                      className="w-full"
-                      isLoading={isProcessing}
-                      startContent={
-                        !isProcessing && <CheckCircle className="w-4 h-4" />
-                      }
-                    >
-                      {isProcessing
-                        ? "Processing with AI..."
-                        : "Generate Content"}
-                    </Button>
-                  </div>
-                </CardBody>
-              </Card>
-            </motion.div>
-          )}
-        </motion.div>
-
-        <motion.div
-          className="lg:col-span-2"
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
-          <Card className="w-full bg-black">
-            <CardBody className="bg-gradient-to-b from-purple-900/20 to-black">
-              <Tabs
-                aria-label="Platform options"
-                selectedKey={selectedPlatform}
-                onSelectionChange={(key) => setSelectedPlatform(key.toString())}
-                color="primary"
-                variant="underlined"
-                classNames={{
-                  tabList: "gap-6",
-                }}
-              >
-                {platforms.map((platform) => (
-                  <Tab
-                    key={platform.key}
-                    title={
-                      <div className="flex items-center gap-2">
-                        {platform.icon}
-                        <span className="text-purple-800 dark:text-purple-400">
-                          {platform.name}
-                        </span>
-                      </div>
-                    }
-                  >
-                    <PlatformContent
-                      platform={platform.key}
-                      isLoading={isProcessing}
-                      isVideoUploaded={isVideoUploaded}
-                    />
-                  </Tab>
-                ))}
-              </Tabs>
-            </CardBody>
-          </Card>
-        </motion.div>
+        <RenderVideoSection
+          handleUploadSuccess={handleUploadSuccess}
+          isVideoUploaded={isVideoUploaded}
+          uploadProgress={uploadProgress}
+          uploadedVideo={uploadedVideo}
+          isProcessing={isProcessing}
+          handleGenerateContent={handleGenerateContent}
+          transcript={transcript}
+          handleRemoveVideo={handleRemoveVideo}
+        />
+        <RenderPlatformTabs
+          selectedPlatform={selectedPlatform}
+          setSelectedPlatform={setSelectedPlatform}
+          isProcessing={isProcessing}
+          handleSaveContent={handleSaveContent}
+          isVideoUploaded={isVideoUploaded}
+          generatedContent={generatedContent}
+          loading={isSaving}
+        />
       </div>
 
-      {/* Video Library Section */}
-      <motion.div
-        className="mt-12"
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.4 }}
-      >
-        <h2 className="text-2xl font-bold mb-6 text-purple-800 dark:text-purple-400">
-          My Video Library
-        </h2>
-        <VideoLibrary />
-      </motion.div>
+      <RenderVideoLibrary videos={videos} loading={data.loaded} />
     </div>
   );
 }

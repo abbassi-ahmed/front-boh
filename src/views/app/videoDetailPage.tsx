@@ -20,7 +20,6 @@ import {
   Tag,
   Globe,
   Share2,
-  Download,
   Info,
 } from "lucide-react";
 import { formatDate } from "../../utils/formatDate";
@@ -284,13 +283,6 @@ export default function VideoDetailsPage() {
               </motion.p>
             </div>
             <div className="flex gap-2">
-              <Button
-                color="secondary"
-                startContent={<Download size={18} />}
-                className="bg-purple-600 text-white hover:bg-purple-700"
-              >
-                Download
-              </Button>
               <Button
                 color="primary"
                 startContent={<Share2 size={18} />}

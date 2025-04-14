@@ -3,6 +3,7 @@ import { Play, Pause } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRef, useState } from "react";
 import { formatDate } from "../utils/formatDate";
+import { Link } from "react-router-dom";
 
 export default function VideoLibrary({ videos, loading }: any) {
   const [playingVideo, setPlayingVideo] = useState<string | null>(null);
@@ -61,12 +62,7 @@ export default function VideoLibrary({ videos, loading }: any) {
               transition={{ duration: 0.3, delay: index * 0.1 }}
               className="h-full"
             >
-              <Card
-                onPress={() => {
-                  console.log(video);
-                }}
-                className="w-full h-full bg-black/40 backdrop-blur-sm border border-purple-500/10 hover:border-purple-500/30 transition-all duration-300 flex flex-col"
-              >
+              <Card className="w-full h-full bg-black/40 backdrop-blur-sm border border-purple-500/10 hover:border-purple-500/30 transition-all duration-300 flex flex-col">
                 <CardBody className="p-0 group relative flex-1">
                   <div className="relative h-full aspect-video overflow-hidden rounded-t-xl">
                     <video
@@ -84,8 +80,7 @@ export default function VideoLibrary({ videos, loading }: any) {
                         className="bg-purple-600 text-white hover:bg-purple-700"
                         size="lg"
                         radius="full"
-                        onClick={(e) => {
-                          e.stopPropagation();
+                        onPress={(e) => {
                           togglePlay(video.id);
                         }}
                       >
@@ -99,7 +94,10 @@ export default function VideoLibrary({ videos, loading }: any) {
                   </div>
                 </CardBody>
                 <CardFooter className="flex flex-col items-start gap-2 p-4">
-                  <div className="flex justify-between items-start w-full">
+                  <Link
+                    to={`/user/video-detail/${video.id}`}
+                    className="flex justify-between items-start w-full cursor-pointer"
+                  >
                     <div className="flex-1">
                       <h3 className="font-semibold text-purple-400 line-clamp-2 text-sm">
                         {video.transcript || "Untitled Video"}
@@ -108,7 +106,7 @@ export default function VideoLibrary({ videos, loading }: any) {
                         Uploaded on {formatDate(video.createdAt)}
                       </p>
                     </div>
-                  </div>
+                  </Link>
                 </CardFooter>
               </Card>
             </motion.div>

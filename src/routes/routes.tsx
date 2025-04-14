@@ -8,6 +8,7 @@ import Signup from "../views/auth/signup";
 import AuthGuard from "../guard/auth-gurad";
 import DefaultLayout from "../layouts/default";
 import MyVideos from "../views/app/my-videos";
+import VideoDetailsPage from "../views/app/videoDetailPage";
 
 const AppRoutes = () => {
   return (
@@ -40,6 +41,7 @@ const AppRoutes = () => {
           >
             <Route path="home" element={<HomePage />} />
             <Route path="my-videos" element={<MyVideos />} />
+            <Route path="video-detail/:id" element={<VideoDetailsPage />} />
             <Route index element={<HomePage />} />
           </Route>
           <Route

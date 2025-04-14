@@ -1,15 +1,30 @@
 import { motion } from "framer-motion";
 import { Tabs, Tab, Card, CardBody } from "@heroui/react";
-import { Clock } from "lucide-react";
 
-// Components
 import { Platform, PlatformKey } from "../views/app/my-videos";
 import PlatformContent from "./platform-content";
+import { FaFacebook, FaInstagram, FaTiktok, FaYoutube } from "react-icons/fa6";
 const PLATFORMS: Platform[] = [
-  { key: "youtube", name: "YouTube", icon: <Clock className="w-5 h-5" /> },
-  { key: "tiktok", name: "TikTok", icon: <Clock className="w-5 h-5" /> },
-  { key: "facebook", name: "Facebook", icon: <Clock className="w-5 h-5" /> },
-  { key: "instagram", name: "Instagram", icon: <Clock className="w-5 h-5" /> },
+  {
+    key: "youtube",
+    name: "YouTube",
+    icon: <FaYoutube className="w-5 h-5 text-red-500" />,
+  },
+  {
+    key: "tiktok",
+    name: "TikTok",
+    icon: <FaTiktok className="w-5 h-5 text-purple-500" />,
+  },
+  {
+    key: "facebook",
+    name: "Facebook",
+    icon: <FaFacebook className="w-5 h-5 text-blue-500" />,
+  },
+  {
+    key: "instagram",
+    name: "Instagram",
+    icon: <FaInstagram className="w-5 h-5 text-pink-500" />,
+  },
 ];
 
 export default function RenderPlatformTabs({

@@ -1,3 +1,5 @@
+"use client";
+
 import { ReactNode, useState } from "react";
 import { motion } from "framer-motion";
 import { Tabs, Tab, Card, CardBody, Button } from "@heroui/react";
@@ -18,21 +20,39 @@ const dummyVideo = {
 };
 
 const platforms: {
-  key: "youtube" | "tiktok" | "facebook";
+  key: "youtube" | "tiktok" | "facebook" | "instagram";
   name: string;
   icon: ReactNode;
 }[] = [
   { key: "youtube", name: "YouTube", icon: <Clock className="w-5 h-5" /> },
   { key: "tiktok", name: "TikTok", icon: <Clock className="w-5 h-5" /> },
   { key: "facebook", name: "Facebook", icon: <Clock className="w-5 h-5" /> },
+  { key: "instagram", name: "Instagram", icon: <Clock className="w-5 h-5" /> },
 ];
 
 export default function MyVideos() {
   const [selectedPlatform, setSelectedPlatform] = useState("youtube");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isVideoUploaded, setIsVideoUploaded] = useState(false);
-
-  const handleUploadSuccess = () => {
+  const [uploadedVideo, setUploadedVideo] = useState<{
+    id: string;
+    title: string;
+    duration: string;
+    uploadDate: string;
+    url: File | string;
+  }>({
+    id: "user-uploaded",
+    title: "Your Uploaded Video",
+    duration: "0:00",
+    uploadDate: new Date().toLocaleDateString(),
+    url: "",
+  });
+  const handleUploadSuccess = (file: File) => {
+    setUploadedVideo((prev) => ({
+      ...prev,
+      title: file.name,
+      url: file,
+    }));
     setIsVideoUploaded(true);
     // Simulate AI processing
     setIsProcessing(true);
@@ -44,7 +64,7 @@ export default function MyVideos() {
   return (
     <div className="container mx-auto px-4 py-8">
       <motion.h1
-        className="text-4xl font-bold text-center mb-8 text-purple-800 dark:text-white"
+        className="text-4xl font-bold text-center mb-8 text-purple-800 dark:text-purple-400"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -61,11 +81,11 @@ export default function MyVideos() {
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <Card className="w-full bg-black">
-            <CardBody className="bg-gradient-to-b from-purple-900/20 to-black ">
+            <CardBody className="bg-gradient-to-b from-purple-900/20 to-black">
               {!isVideoUploaded ? (
                 <VideoUploader onUploadSuccess={handleUploadSuccess} />
               ) : (
-                <VideoPlayer video={dummyVideo} />
+                <VideoPlayer video={uploadedVideo} />
               )}
             </CardBody>
           </Card>
@@ -77,16 +97,18 @@ export default function MyVideos() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3, delay: 0.5 }}
             >
-              <Card>
-                <CardBody>
-                  <h3 className="text-lg font-semibold mb-2">Video Details</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
+              <Card className="bg-black">
+                <CardBody className="bg-gradient-to-b from-purple-900/20 to-black">
+                  <h3 className="text-lg text-purple-800 dark:text-purple-400 font-semibold mb-2">
+                    Video Details
+                  </h3>
+                  <p className="text-sm text-white dark:text-gray-300">
                     <span className="font-medium">Duration:</span>{" "}
-                    {dummyVideo.duration}
+                    {uploadedVideo.duration}
                   </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                  <p className="text-sm text-white dark:text-gray-300">
                     <span className="font-medium">Uploaded:</span>{" "}
-                    {dummyVideo.uploadDate}
+                    {uploadedVideo.uploadDate}
                   </p>
                   <div className="mt-4">
                     <Button
@@ -108,17 +130,14 @@ export default function MyVideos() {
           )}
         </motion.div>
 
-        {/* Right Column - AI Generated Content */}
         <motion.div
           className="lg:col-span-2"
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          <Card className="w-full">
-            <CardBody>
-              <h2 className="text-2xl font-bold mb-4">AI Generated Content</h2>
-
+          <Card className="w-full bg-black">
+            <CardBody className="bg-gradient-to-b from-purple-900/20 to-black">
               <Tabs
                 aria-label="Platform options"
                 selectedKey={selectedPlatform}
@@ -135,7 +154,9 @@ export default function MyVideos() {
                     title={
                       <div className="flex items-center gap-2">
                         {platform.icon}
-                        <span>{platform.name}</span>
+                        <span className="text-purple-800 dark:text-purple-400">
+                          {platform.name}
+                        </span>
                       </div>
                     }
                   >
@@ -159,7 +180,7 @@ export default function MyVideos() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.4 }}
       >
-        <h2 className="text-2xl font-bold mb-6 text-purple-800 dark:text-white">
+        <h2 className="text-2xl font-bold mb-6 text-purple-800 dark:text-purple-400">
           My Video Library
         </h2>
         <VideoLibrary />

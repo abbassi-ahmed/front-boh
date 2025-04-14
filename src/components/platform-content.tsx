@@ -1,7 +1,7 @@
+import { useState } from "react";
 import { Textarea, Spinner, Chip, Divider, Button } from "@heroui/react";
 import { Copy, Check, RefreshCw } from "lucide-react";
 
-// Dummy data for different platforms
 const platformContent = {
   youtube: {
     title: "How I Built a Smart Home System in One Weekend | DIY Tech Project",
@@ -33,23 +33,46 @@ const platformContent = {
     transcription:
       "Hello friends! I'm really excited to share this project with you today. Over the past weekend, I decided to upgrade my home with some smart technology, and I'm going to walk you through exactly how I did it...",
   },
+  instagram: {
+    title: "Weekend Smart Home Glow-Up ✨🏡",
+    description:
+      "Swipe to see the before & after! 😍 I turned my basic house into a smart home in just one weekend. From smart lights to voice controls — everything is now connected! 🔌📱\n\nWould you try this at home?\n\n#SmartHomeGoals #WeekendProject #HomeTech #DIYUpgrade #SmartLiving",
+    tags: [
+      "SmartHomeGoals",
+      "WeekendProject",
+      "HomeTech",
+      "DIYUpgrade",
+      "SmartLiving",
+    ],
+    transcription:
+      "This weekend, I challenged myself to make my house smarter — and it totally worked! The lights, the thermostat, even my coffee machine… all automated now. Here’s how I pulled it off 👇",
+  },
 };
+
+interface PlatformContentProps {
+  platform: keyof typeof platformContent;
+  isLoading: boolean;
+  isVideoUploaded: boolean;
+}
 
 export default function PlatformContent({
   platform,
   isLoading,
   isVideoUploaded,
-}: {
-  platform: keyof typeof platformContent;
-  isLoading: boolean;
-  isVideoUploaded: boolean;
-}) {
+}: PlatformContentProps) {
   const content = platformContent[platform];
+  const [copied, setCopied] = useState<string | null>(null);
+
+  const handleCopy = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(field);
+    setTimeout(() => setCopied(null), 2000);
+  };
 
   if (!isVideoUploaded) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <p className="text-gray-500 dark:text-gray-400">
+        <p className="text-purple-300">
           Upload a video to generate AI content for{" "}
           {platform.charAt(0).toUpperCase() + platform.slice(1)}
         </p>
@@ -60,8 +83,8 @@ export default function PlatformContent({
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <Spinner color="primary" size="lg" />
-        <p className="mt-4 text-gray-600 dark:text-gray-300">
+        <Spinner color="secondary" size="lg" />
+        <p className="mt-4 text-purple-300">
           Analyzing video and generating content for{" "}
           {platform.charAt(0).toUpperCase() + platform.slice(1)}...
         </p>
@@ -73,82 +96,126 @@ export default function PlatformContent({
     <div className="py-4 space-y-6">
       <div>
         <div className="flex justify-between items-center mb-2">
-          <label className="text-sm font-medium">Title</label>
+          <label className="text-sm text-purple-300 font-medium">Title</label>
           <Button
             size="sm"
-            variant="light"
-            startContent={<Copy size={14} />}
-            className="text-xs"
+            variant="flat"
+            className="text-xs bg-purple-900/40 text-purple-300 hover:bg-purple-800/50"
+            onPress={() => handleCopy(content.title, "title")}
+            startContent={
+              copied === "title" ? (
+                <Check size={14} className="text-green-400" />
+              ) : (
+                <Copy size={14} />
+              )
+            }
           >
-            Copy
+            {copied === "title" ? "Copied!" : "Copy"}
           </Button>
         </div>
         <Textarea
           value={content.title}
           variant="bordered"
-          className="w-full"
+          className="w-full bg-zinc-900/80 border-purple-800/30 text-white"
           minRows={2}
         />
       </div>
 
       <div>
         <div className="flex justify-between items-center mb-2">
-          <label className="text-sm font-medium">Description</label>
+          <label className="text-sm text-purple-300 font-medium">
+            Description
+          </label>
           <Button
             size="sm"
-            variant="light"
-            startContent={<Copy size={14} />}
-            className="text-xs"
+            variant="flat"
+            className="text-xs bg-purple-900/40 text-purple-300 hover:bg-purple-800/50"
+            onPress={() => handleCopy(content.description, "description")}
+            startContent={
+              copied === "description" ? (
+                <Check size={14} className="text-green-400" />
+              ) : (
+                <Copy size={14} />
+              )
+            }
           >
-            Copy
+            {copied === "description" ? "Copied!" : "Copy"}
           </Button>
         </div>
         <Textarea
           value={content.description}
           variant="bordered"
-          className="w-full"
+          className="w-full bg-zinc-900/80 border-purple-800/30 text-white"
           minRows={4}
         />
       </div>
 
       <div>
-        <label className="text-sm font-medium block mb-2">Tags</label>
+        <label className="text-sm text-purple-300 font-medium block mb-2">
+          Tags
+        </label>
         <div className="flex flex-wrap gap-2 mb-2">
           {content.tags.map((tag, index) => (
-            <Chip key={index} color="primary" variant="flat">
+            <Chip
+              key={index}
+              color="secondary"
+              variant="flat"
+              classNames={{
+                base: "bg-purple-900/50 text-purple-200 border border-purple-700/50",
+                content: "text-purple-200",
+              }}
+            >
               #{tag}
             </Chip>
           ))}
         </div>
         <Button
           size="sm"
-          variant="light"
-          startContent={<Copy size={14} />}
-          className="text-xs"
+          variant="flat"
+          className="text-xs bg-purple-900/40 text-purple-300 hover:bg-purple-800/50"
+          onPress={() =>
+            handleCopy(content.tags.map((tag) => `#${tag}`).join(" "), "tags")
+          }
+          startContent={
+            copied === "tags" ? (
+              <Check size={14} className="text-green-400" />
+            ) : (
+              <Copy size={14} />
+            )
+          }
         >
-          Copy All Tags
+          {copied === "tags" ? "Copied!" : "Copy All Tags"}
         </Button>
       </div>
 
-      <Divider />
+      <Divider className="bg-purple-800/30" />
 
       <div>
         <div className="flex justify-between items-center mb-2">
-          <label className="text-sm font-medium">Transcription</label>
+          <label className="text-sm text-purple-300 font-medium">
+            Transcription
+          </label>
           <div className="flex gap-2">
             <Button
               size="sm"
-              variant="light"
-              startContent={<Copy size={14} />}
-              className="text-xs"
+              variant="flat"
+              className="text-xs bg-purple-900/40 text-purple-300 hover:bg-purple-800/50"
+              onPress={() => handleCopy(content.transcription, "transcription")}
+              startContent={
+                copied === "transcription" ? (
+                  <Check size={14} className="text-green-400" />
+                ) : (
+                  <Copy size={14} />
+                )
+              }
             >
-              Copy
+              {copied === "transcription" ? "Copied!" : "Copy"}
             </Button>
             <Button
               size="sm"
-              variant="light"
+              variant="flat"
+              className="text-xs bg-purple-900/40 text-purple-300 hover:bg-purple-800/50"
               startContent={<RefreshCw size={14} />}
-              className="text-xs"
             >
               Regenerate
             </Button>
@@ -157,20 +224,24 @@ export default function PlatformContent({
         <Textarea
           value={content.transcription}
           variant="bordered"
-          className="w-full"
+          className="w-full bg-zinc-900/80 border-purple-800/30 text-white"
           minRows={6}
         />
       </div>
 
       <div className="flex justify-end gap-2 mt-4">
         <Button
-          color="primary"
           variant="flat"
+          className="bg-purple-900/60 text-purple-300 hover:bg-purple-800/70 border border-purple-700/50"
           startContent={<RefreshCw size={16} />}
         >
           Regenerate All
         </Button>
-        <Button color="success" startContent={<Check size={16} />}>
+        <Button
+          color="success"
+          className="bg-green-700 hover:bg-green-600 text-white border border-green-600/50"
+          startContent={<Check size={16} />}
+        >
           Save Content
         </Button>
       </div>

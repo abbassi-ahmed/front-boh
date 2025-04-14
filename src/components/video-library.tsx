@@ -11,7 +11,7 @@ import {
 } from "@heroui/react";
 import { MoreVertical, Trash, Edit, Download } from "lucide-react";
 import { motion } from "framer-motion";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 // Dummy data for video library
 const libraryVideos = [
@@ -49,7 +49,7 @@ const libraryVideos = [
   },
 ];
 
-const platformIcons: Record<"youtube" | "tiktok" | "facebook", ReactNode> = {
+const platformIcons: Record<string, ReactNode> = {
   youtube: <Edit className="w-4 h-4 text-red-600" />,
   tiktok: <Edit className="w-4 h-4 text-black dark:text-white" />,
   facebook: <Edit className="w-4 h-4 text-blue-600" />,
@@ -57,7 +57,7 @@ const platformIcons: Record<"youtube" | "tiktok" | "facebook", ReactNode> = {
 
 export default function VideoLibrary() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 bg-gradient-to-b from-purple-900/20 to-black p-4 rounded-lg">
       {libraryVideos.map((video, index) => (
         <motion.div
           key={video.id}
@@ -65,7 +65,7 @@ export default function VideoLibrary() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: index * 0.1 }}
         >
-          <Card className="w-full h-full">
+          <Card className="w-full bg-black h-full">
             <CardBody className="p-0">
               <div className="relative">
                 <img
@@ -80,7 +80,7 @@ export default function VideoLibrary() {
             </CardBody>
             <CardFooter className="flex flex-col items-start text-left">
               <div className="flex justify-between w-full">
-                <h3 className="font-semibold text-sm line-clamp-2">
+                <h3 className="font-semibold text-sm text-purple-800 dark:text-purple-400 line-clamp-2">
                   {video.title}
                 </h3>
                 <Dropdown>
@@ -121,9 +121,8 @@ export default function VideoLibrary() {
                     key={platform}
                     size="sm"
                     variant="flat"
-                    startContent={
-                      platformIcons[platform as keyof typeof platformIcons]
-                    }
+                    color="primary"
+                    startContent={platformIcons[platform]}
                     className="text-xs"
                   >
                     {platform.charAt(0).toUpperCase() + platform.slice(1)}

@@ -1,27 +1,102 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@heroui/react";
 import { Play, Pause, Volume2, VolumeX } from "lucide-react";
 
-export default function VideoPlayer({ video }: any) {
+interface Video {
+  id: string;
+  title: string;
+  thumbnail?: string;
+  duration: string;
+  uploadDate: string;
+  url: string | File;
+}
+
+interface VideoPlayerProps {
+  video: Video;
+}
+
+export default function VideoPlayer({ video }: VideoPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const togglePlay = () => {
-    setIsPlaying(!isPlaying);
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
   };
 
   const toggleMute = () => {
-    setIsMuted(!isMuted);
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
   };
+
+  const handleTimeUpdate = () => {
+    if (videoRef.current) {
+      const currentProgress = (videoRef.current.currentTime / duration) * 100;
+      setProgress(currentProgress);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (videoRef.current) {
+      setDuration(videoRef.current.duration);
+      // Format duration as MM:SS
+      const minutes = Math.floor(videoRef.current.duration / 60);
+      const seconds = Math.floor(videoRef.current.duration % 60);
+      video.duration = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+    }
+  };
+
+  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (videoRef.current && duration) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const pos = (e.clientX - rect.left) / rect.width;
+      videoRef.current.currentTime = pos * duration;
+    }
+  };
+
+  // Create object URL for File objects
+  const [videoUrl, setVideoUrl] = useState("");
+  useEffect(() => {
+    if (video.url instanceof File) {
+      const url = URL.createObjectURL(video.url);
+      setVideoUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setVideoUrl(video.url);
+    }
+  }, [video.url]);
 
   return (
     <div className="w-full">
-      <div className="relative aspect-video bg-black rounded-lg overflow-hidden mb-4">
-        <img
-          src={video.thumbnail || "/placeholder.svg"}
-          alt={video.title}
-          className="w-full h-full object-cover"
-        />
+      <div className="relative aspect-video rounded-lg overflow-hidden mb-4">
+        {videoUrl ? (
+          <video
+            ref={videoRef}
+            src={videoUrl}
+            className="w-full h-full object-cover"
+            onTimeUpdate={handleTimeUpdate}
+            onLoadedMetadata={handleLoadedMetadata}
+            onClick={togglePlay}
+            loop
+          />
+        ) : (
+          <img
+            src={video.thumbnail || "/placeholder.svg"}
+            alt={video.title}
+            className="w-full h-full object-cover"
+          />
+        )}
 
         {/* Play button overlay */}
         <div className="absolute inset-0 flex items-center justify-center">
@@ -63,13 +138,21 @@ export default function VideoPlayer({ video }: any) {
           </div>
 
           {/* Progress bar */}
-          <div className="w-full h-1 bg-white/30 rounded-full mt-2">
-            <div className="w-1/3 h-full bg-primary rounded-full"></div>
+          <div
+            className="w-full h-1 bg-white/30 rounded-full mt-2 cursor-pointer"
+            onClick={handleProgressClick}
+          >
+            <div
+              className="h-full bg-primary rounded-full"
+              style={{ width: `${progress}%` }}
+            ></div>
           </div>
         </div>
       </div>
 
-      <h3 className="text-lg font-semibold">{video.title}</h3>
+      <h3 className="text-lg text-purple-800 dark:text-purple-400 font-semibold">
+        {video.title}
+      </h3>
     </div>
   );
 }

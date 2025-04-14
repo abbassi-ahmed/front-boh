@@ -1,12 +1,8 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   HomeIcon,
   Settings,
-  Calendar,
-  BarChart,
   LogOut,
   VideoIcon,
   Menu,
@@ -17,10 +13,8 @@ import {
 import { useAuth } from "../context/AuthContext";
 
 const navItems = [
-  { path: "/user/home", icon: HomeIcon, label: "Home" },
-  { path: "/user/calendar", icon: Calendar, label: "Calendar" },
+  { path: "/user/home", icon: HomeIcon, label: "Statistics" },
   { path: "/user/my-videos", icon: VideoIcon, label: "My Videos" },
-  { path: "/user/analytics", icon: BarChart, label: "Analytics" },
   { path: "/user/settings", icon: Settings, label: "Settings" },
 ];
 
@@ -76,7 +70,6 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile menu button */}
       <button
         aria-label={isMobileOpen ? "Close menu" : "Open menu"}
         className="mobile-menu-button md:hidden fixed top-4 left-4 z-50 p-2 rounded-full bg-zinc-800 text-white hover:bg-zinc-700 transition-colors duration-200 shadow-lg"
@@ -85,7 +78,6 @@ export default function Sidebar() {
         {isMobileOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
 
-      {/* Sidebar */}
       <div
         id="sidebar"
         className={`

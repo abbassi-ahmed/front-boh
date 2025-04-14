@@ -37,7 +37,6 @@ import {
   Cell,
 } from "recharts";
 
-// Dummy data for charts
 const viewsData = [
   { name: "Jan", youtube: 4000, tiktok: 2400, facebook: 1800, instagram: 2000 },
   { name: "Feb", youtube: 3000, tiktok: 3200, facebook: 2200, instagram: 2700 },
@@ -80,19 +79,18 @@ const platformPerformance = [
   { name: "Facebook", views: 18900, engagement: 2100, followers: 8400 },
   { name: "Instagram", views: 22300, engagement: 5100, followers: 15000 },
 ];
-// Custom colors
+
 const COLORS = ["#9333ea", "#c084fc", "#a855f7", "#d8b4fe"];
 const PLATFORM_COLORS = {
-  youtube: "#9333ea", // purple-600
-  tiktok: "#c084fc", // purple-400
-  facebook: "#d8b4fe", // purple-300
-  instagram: "#e879f9", // purple-500 (you can adjust if you want something more pinkish)
+  youtube: "#9333ea",
+  tiktok: "#c084fc",
+  facebook: "#d8b4fe",
+  instagram: "#e879f9",
 };
 
 export default function Statistics() {
   const [timeRange, setTimeRange] = useState("Last 3 Months");
 
-  // Calculate summary metrics
   const totalViews = platformPerformance.reduce(
     (sum, platform) => sum + platform.views,
     0
@@ -106,7 +104,6 @@ export default function Statistics() {
     0
   );
 
-  // Calculate growth percentages
   const viewsGrowth = 18.5;
   const engagementGrowth = 24.3;
   const followersGrowth = 12.7;

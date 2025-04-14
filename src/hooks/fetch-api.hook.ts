@@ -128,7 +128,7 @@ export const useAxios = (
   ) => {
     try {
       showLoader();
-      setError(null); // Reset error
+      setError(null);
       setLoaded(true);
 
       const response = await api.request({
@@ -156,8 +156,8 @@ export const useAxios = (
         });
       }
     } catch (err) {
-      const axiosError = err as AxiosErrorResponse; // Cast error
-      setError(axiosError); // Set error object
+      const axiosError = err as AxiosErrorResponse;
+      setError(axiosError);
 
       if (axiosError?.response) {
         const status = axiosError.response.status;

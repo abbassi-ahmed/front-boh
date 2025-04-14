@@ -2,7 +2,6 @@ import { ReactNode, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
 
-// Components
 import { formatDuration } from "../../utils/formatDuration";
 import RenderVideoSection from "../../components/renderVideoSection";
 import RenderPlatformTabs from "../../components/RenderPlatformTabs";
@@ -10,7 +9,6 @@ import RenderVideoLibrary from "../../components/renderVideoLibrary";
 import { addToast } from "@heroui/react";
 import { useAxios } from "../../hooks/fetch-api.hook";
 
-// Types
 export type PlatformKey = "youtube" | "tiktok" | "facebook" | "instagram";
 
 export interface Platform {
@@ -28,8 +26,6 @@ export interface Video {
   playbackUrl?: string;
 }
 
-// Constants
-
 const INITIAL_VIDEO_STATE: Video = {
   id: "user-uploaded",
   title: "Your Uploaded Video",
@@ -39,7 +35,6 @@ const INITIAL_VIDEO_STATE: Video = {
 };
 
 export default function MyVideos() {
-  // State
   const [selectedPlatform, setSelectedPlatform] =
     useState<PlatformKey>("youtube");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -66,7 +61,6 @@ export default function MyVideos() {
 
     setIsProcessing(true);
     try {
-      // Start transcription
       const transcriptionResponse = await axios.post(
         "http://localhost:3000/api/assembly/transcribe",
         {
@@ -160,7 +154,6 @@ export default function MyVideos() {
     setUploadedVideo(INITIAL_VIDEO_STATE);
     setIsVideoUploaded(false);
     setTranscript(null);
-    // Reset any other related state
   };
   const handleUploadSuccess = async (file: File) => {
     setIsProcessing(true);

@@ -29,7 +29,6 @@ import { FaFacebook } from "react-icons/fa";
 import { useParams } from "react-router-dom";
 import { useAxios } from "../../hooks/fetch-api.hook";
 
-// Sample video data
 interface PostingTime {
   notes: string;
   timezone: string;

@@ -50,7 +50,7 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
   const handleLoadedMetadata = () => {
     if (videoRef.current) {
       setDuration(videoRef.current.duration);
-      // Format duration as MM:SS
+
       const minutes = Math.floor(videoRef.current.duration / 60);
       const seconds = Math.floor(videoRef.current.duration % 60);
       video.duration = `${minutes}:${seconds.toString().padStart(2, "0")}`;
@@ -65,7 +65,6 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
     }
   };
 
-  // Create object URL for File objects
   const [videoUrl, setVideoUrl] = useState("");
   useEffect(() => {
     if (video.url instanceof File) {

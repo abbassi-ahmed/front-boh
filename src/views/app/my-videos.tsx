@@ -4,10 +4,10 @@ import axios from "axios";
 
 import { formatDuration } from "../../utils/formatDuration";
 import RenderVideoSection from "../../components/renderVideoSection";
-import RenderPlatformTabs from "../../components/RenderPlatformTabs";
 import RenderVideoLibrary from "../../components/renderVideoLibrary";
 import { addToast } from "@heroui/react";
 import { useAxios } from "../../hooks/fetch-api.hook";
+import RenderPlatformTabs from "../../components/renderPlatformTabs";
 
 export type PlatformKey = "youtube" | "tiktok" | "facebook" | "instagram";
 
@@ -98,7 +98,7 @@ export default function MyVideos() {
 
       await axios
         .post("http://localhost:3000/api/assembly", saveData)
-        .then((res) => {
+        .then(() => {
           addToast({
             title: "Saved",
             description: "Content Saved successfully",

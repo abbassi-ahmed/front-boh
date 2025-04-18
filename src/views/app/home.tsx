@@ -505,7 +505,7 @@ export default function Statistics() {
                         `${name}: ${(percent * 100).toFixed(0)}%`
                       }
                     >
-                      {audienceData.map((entry, index) => (
+                      {audienceData.map((_, index) => (
                         <Cell
                           key={`cell-${index}`}
                           fill={COLORS[index % COLORS.length]}
@@ -552,7 +552,7 @@ export default function Statistics() {
                     <YAxis dataKey="name" type="category" stroke="#a78bfa" />
                     <Tooltip content={<CustomTooltip />} />
                     <Bar dataKey="value" fill="#9333ea" radius={[0, 4, 4, 0]}>
-                      {engagementData.map((entry, index) => (
+                      {engagementData.map((_, index) => (
                         <Cell
                           key={`cell-${index}`}
                           fill={COLORS[index % COLORS.length]}

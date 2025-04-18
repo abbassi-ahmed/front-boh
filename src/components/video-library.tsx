@@ -80,7 +80,7 @@ export default function VideoLibrary({ videos, loading }: any) {
                         className="bg-purple-600 text-white hover:bg-purple-700"
                         size="lg"
                         radius="full"
-                        onPress={(e) => {
+                        onPress={() => {
                           togglePlay(video.id);
                         }}
                       >

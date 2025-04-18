@@ -8,7 +8,6 @@ import { useAuth } from "../../context/AuthContext";
 interface FacebookProfile {
   name: string;
   email: string;
-  facebookId: string;
   picture: {
     data: {
       height: number;
@@ -243,9 +242,6 @@ export default function SocialSettings() {
                       </Chip>
                     )}
                   </div>
-                  <p className="text-zinc-400">
-                    ID: {facebookProfile.facebookId}
-                  </p>
                 </div>
                 <Button
                   onPress={() => handleDisconnect("facebook")}

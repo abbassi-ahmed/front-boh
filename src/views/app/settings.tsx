@@ -275,12 +275,6 @@ export default function SocialSettings() {
                     <p className="text-zinc-400 text-xs">ACCOUNT TYPE</p>
                     <p className="text-white font-medium">Personal</p>
                   </div>
-                  <div className="text-center">
-                    <p className="text-zinc-400 text-xs">CONNECTED SINCE</p>
-                    <p className="text-white font-medium">
-                      {new Date().toLocaleDateString()}
-                    </p>
-                  </div>
                 </div>
               </div>
             </>

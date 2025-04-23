@@ -293,15 +293,6 @@ export default function SocialSettings() {
                 <div className="text-sm">
                   <div className="flex items-center gap-2 text-white">
                     <span>{facebookProfile.name}</span>
-                    {facebookProfile.email && (
-                      <Chip
-                        size="sm"
-                        variant="flat"
-                        className="bg-zinc-800 text-zinc-300"
-                      >
-                        Personal
-                      </Chip>
-                    )}
                   </div>
                 </div>
                 <Button
@@ -325,20 +316,6 @@ export default function SocialSettings() {
               </Button>
             )}
           </div>
-
-          {facebookProfile && (
-            <>
-              <Divider className="bg-zinc-800" />
-              <div className="px-5 py-3 flex justify-between items-center">
-                <div className="flex gap-6">
-                  <div className="text-center">
-                    <p className="text-zinc-400 text-xs">ACCOUNT TYPE</p>
-                    <p className="text-white font-medium">Personal</p>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
         </Card>
 
         {/* Instagram Card */}
@@ -482,15 +459,6 @@ export default function SocialSettings() {
                 <div className="text-sm">
                   <div className="flex items-center gap-2 text-white">
                     <span>{youtubeProfile.name}</span>
-                    {youtubeProfile.email && (
-                      <Chip
-                        size="sm"
-                        variant="flat"
-                        className="bg-zinc-800 text-zinc-300"
-                      >
-                        Personal
-                      </Chip>
-                    )}
                   </div>
                 </div>
                 <Button
@@ -514,19 +482,6 @@ export default function SocialSettings() {
               </Button>
             )}
           </div>
-          {youtubeProfile && (
-            <>
-              <Divider className="bg-zinc-800" />
-              <div className="px-5 py-3 flex justify-between items-center">
-                <div className="flex gap-6">
-                  <div className="text-center">
-                    <p className="text-zinc-400 text-xs">ACCOUNT TYPE</p>
-                    <p className="text-white font-medium">Personal</p>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
         </Card>
 
         <Card className="bg-zinc-900/60 border border-zinc-800 shadow-md overflow-hidden">
@@ -595,37 +550,6 @@ export default function SocialSettings() {
               </Button>
             )}
           </div>
-
-          {tiktokProfile && (
-            <>
-              <Divider className="bg-zinc-800" />
-              <div className="px-5 py-3 flex justify-between items-center">
-                <div className="flex gap-6">
-                  <div className="text-center">
-                    <p className="text-zinc-400 text-xs">FOLLOWERS</p>
-                    <p className="text-white font-medium">
-                      {tiktokProfile.followers.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-zinc-400 text-xs">LIKES</p>
-                    <p className="text-white font-medium">
-                      {tiktokProfile.likes.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-zinc-400 text-xs">VIDEOS</p>
-                    <p className="text-white font-medium">
-                      {tiktokProfile.videos}
-                    </p>
-                  </div>
-                </div>
-                <Button variant="ghost" size="sm" className="text-white">
-                  View Insights
-                </Button>
-              </div>
-            </>
-          )}
         </Card>
       </div>
     </div>

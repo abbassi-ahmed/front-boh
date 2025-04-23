@@ -4,6 +4,8 @@ import { FaFacebook, FaInstagram, FaTiktok, FaYoutube } from "react-icons/fa6";
 import { MdVerified } from "react-icons/md";
 import { useAxios } from "../../hooks/fetch-api.hook";
 import { useAuth } from "../../context/AuthContext";
+import { useGoogleLogin } from "@react-oauth/google";
+import axios from "axios";
 
 interface FacebookProfile {
   name: string;
@@ -29,12 +31,10 @@ interface InstagramProfile {
 }
 
 interface YoutubeProfile {
-  username: string;
-  subscribers: number;
-  videos: number;
-  views: number;
-  verified: boolean;
-  profilePic: string;
+  name: string;
+  email: string;
+  picture: string;
+  youtubeId: string;
 }
 
 interface TiktokProfile {
@@ -61,14 +61,9 @@ export default function SocialSettings() {
     useState<FacebookProfile | null>(null);
   const [instagramProfile, setInstagramProfile] =
     useState<InstagramProfile | null>(null);
-  const [youtubeProfile, setYoutubeProfile] = useState<YoutubeProfile | null>({
-    username: "John's Channel",
-    subscribers: 8560,
-    videos: 42,
-    views: 1243000,
-    verified: true,
-    profilePic: "https://randomuser.me/api/portraits/men/22.jpg",
-  });
+  const [youtubeProfile, setYoutubeProfile] = useState<YoutubeProfile | null>(
+    null
+  );
   const [tiktokProfile, setTiktokProfile] = useState<TiktokProfile | null>(
     null
   );
@@ -77,7 +72,14 @@ export default function SocialSettings() {
     if (userData.responseData) {
       setFacebookProfile(userData.responseData.facebookProfile);
       setInstagramProfile(userData.responseData.instagram);
-      setYoutubeProfile(userData.responseData.youtube);
+      if (userData.responseData.youtubeProfile) {
+        setYoutubeProfile({
+          name: userData.responseData.youtubeProfile.name,
+          email: userData.responseData.youtubeProfile.email,
+          picture: userData.responseData.youtubeProfile.profilePicUrl,
+          youtubeId: userData.responseData.youtubeProfile.youtubeId,
+        });
+      }
       setTiktokProfile(userData.responseData.tiktok);
     }
   }, [userData.responseData]);
@@ -89,11 +91,27 @@ export default function SocialSettings() {
     "facebookAssign",
     false
   );
+
   const { facebookUnAssign } = useAxios(
     "users",
     "PATCH",
     {},
     "facebookUnAssign",
+    false
+  );
+  const { youtubeAssign } = useAxios(
+    "users",
+    "POST",
+    {},
+    "youtubeAssign",
+    false
+  );
+
+  const { youtubeUnAssign } = useAxios(
+    "users",
+    "PATCH",
+    {},
+    "youtubeUnAssign",
     false
   );
   const handleLoginFb = () => {
@@ -108,6 +126,42 @@ export default function SocialSettings() {
       { scope: "public_profile,email" }
     );
   };
+  const handleLoginYt = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        const res = await axios.get(
+          "https://www.googleapis.com/oauth2/v3/userinfo",
+          {
+            headers: {
+              Authorization: `Bearer ${tokenResponse.access_token}`,
+            },
+          }
+        );
+
+        youtubeAssign.submitRequest(
+          {
+            youtubeId: res.data.sub,
+            name: res.data.name,
+            profilePicUrl: res.data.picture,
+            email: res.data.email,
+          },
+          `users/${user?.id}/youtube`,
+          true
+        );
+        setYoutubeProfile({
+          youtubeId: res.data.sub,
+          name: res.data.name,
+          picture: res.data.picture,
+          email: res.data.email,
+        });
+      } catch (err) {
+        console.error("Failed to fetch user info", err);
+      }
+    },
+    onError: (error) => {
+      console.error("Login Failed:", error);
+    },
+  });
 
   const fetchUserFbProfile = () => {
     (window as any).FB.api(
@@ -161,6 +215,8 @@ export default function SocialSettings() {
       handleLoginInstagram();
     } else if (platform === "tiktok") {
       handleLoginTikTok();
+    } else if (platform === "youtube") {
+      handleLoginYt();
     }
   };
 
@@ -177,6 +233,11 @@ export default function SocialSettings() {
       setInstagramProfile(null);
     } else if (platform === "youtube") {
       setYoutubeProfile(null);
+      youtubeUnAssign.submitRequest(
+        {},
+        `users/${user?.id}/youtube/unassign`,
+        true
+      );
     } else if (platform === "tiktok") {
       setTiktokProfile(null);
     }
@@ -387,7 +448,10 @@ export default function SocialSettings() {
                 <Avatar
                   icon={<FaYoutube size={20} />}
                   className="bg-red-600 text-white h-12 w-12"
-                  src={youtubeProfile?.profilePic}
+                  src={
+                    userData?.responseData?.youtubeProfile?.profilePicUrl ||
+                    youtubeProfile?.picture
+                  }
                 />
                 <div className="absolute -bottom-1 -right-1 bg-red-600 rounded-full p-1">
                   <FaYoutube size={12} className="text-white" />
@@ -417,14 +481,17 @@ export default function SocialSettings() {
               <div className="flex flex-col sm:flex-row sm:items-center gap-4 mt-2 sm:mt-0">
                 <div className="text-sm">
                   <div className="flex items-center gap-2 text-white">
-                    <span>{youtubeProfile.username}</span>
-                    {youtubeProfile.verified && (
-                      <MdVerified className="text-red-400" size={16} />
+                    <span>{youtubeProfile.name}</span>
+                    {youtubeProfile.email && (
+                      <Chip
+                        size="sm"
+                        variant="flat"
+                        className="bg-zinc-800 text-zinc-300"
+                      >
+                        Personal
+                      </Chip>
                     )}
                   </div>
-                  <p className="text-zinc-400">
-                    {youtubeProfile.subscribers.toLocaleString()} subscribers
-                  </p>
                 </div>
                 <Button
                   onPress={() => handleDisconnect("youtube")}
@@ -447,40 +514,21 @@ export default function SocialSettings() {
               </Button>
             )}
           </div>
-
           {youtubeProfile && (
             <>
               <Divider className="bg-zinc-800" />
               <div className="px-5 py-3 flex justify-between items-center">
                 <div className="flex gap-6">
                   <div className="text-center">
-                    <p className="text-zinc-400 text-xs">SUBSCRIBERS</p>
-                    <p className="text-white font-medium">
-                      {youtubeProfile.subscribers.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-zinc-400 text-xs">VIDEOS</p>
-                    <p className="text-white font-medium">
-                      {youtubeProfile.videos}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-zinc-400 text-xs">TOTAL VIEWS</p>
-                    <p className="text-white font-medium">
-                      {(youtubeProfile.views / 1000).toFixed(1)}K
-                    </p>
+                    <p className="text-zinc-400 text-xs">ACCOUNT TYPE</p>
+                    <p className="text-white font-medium">Personal</p>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" className="text-red-400">
-                  View Analytics
-                </Button>
               </div>
             </>
           )}
         </Card>
 
-        {/* TikTok Card */}
         <Card className="bg-zinc-900/60 border border-zinc-800 shadow-md overflow-hidden">
           <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">

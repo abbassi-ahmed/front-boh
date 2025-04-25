@@ -35,6 +35,24 @@ interface YoutubeProfile {
   email: string;
   picture: string;
   youtubeId: string;
+  channelId?: string;
+  channelStats?: {
+    viewCount: string;
+    subscriberCount: string;
+    videoCount: string;
+    hiddenSubscriberCount: boolean;
+  };
+  analytics?: {
+    totalViews: number;
+    totalWatchTime: number;
+    totalSubscribers: number;
+    recentStats: Array<{
+      date: string;
+      views: number;
+      watchTime: number;
+      subscribers: number;
+    }>;
+  };
 }
 
 interface TiktokProfile {
@@ -78,6 +96,9 @@ export default function SocialSettings() {
           email: userData.responseData.youtubeProfile.email,
           picture: userData.responseData.youtubeProfile.profilePicUrl,
           youtubeId: userData.responseData.youtubeProfile.youtubeId,
+          channelId: userData.responseData.youtubeProfile.channelId,
+          channelStats: userData.responseData.youtubeProfile.channelStats,
+          analytics: userData.responseData.youtubeProfile.analytics,
         });
       }
       setTiktokProfile(userData.responseData.tiktok);
@@ -127,6 +148,14 @@ export default function SocialSettings() {
     );
   };
   const handleLoginYt = useGoogleLogin({
+    scope: [
+      "https://www.googleapis.com/auth/userinfo.profile",
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/yt-analytics.readonly",
+      "https://www.googleapis.com/auth/youtube.readonly",
+      "https://www.googleapis.com/auth/youtube",
+      "https://www.googleapis.com/auth/yt-analytics-monetary.readonly",
+    ].join(" "),
     onSuccess: async (tokenResponse) => {
       try {
         const res = await axios.get(
@@ -138,24 +167,98 @@ export default function SocialSettings() {
           }
         );
 
+        const channelRes = await axios.get(
+          "https://www.googleapis.com/youtube/v3/channels",
+          {
+            headers: {
+              Authorization: `Bearer ${tokenResponse.access_token}`,
+            },
+            params: {
+              part: "snippet,statistics",
+              mine: true,
+            },
+          }
+        );
+
+        const channelData = channelRes.data.items[0];
+        const channelStats = channelData.statistics;
+        const channelId = channelData.id;
+
+        const analyticsRes = await axios.get(
+          "https://youtubeanalytics.googleapis.com/v2/reports",
+          {
+            headers: {
+              Authorization: `Bearer ${tokenResponse.access_token}`,
+            },
+            params: {
+              startDate: "2024-01-01",
+              endDate: new Date().toISOString().split("T")[0],
+              metrics: "views,estimatedMinutesWatched,subscribersGained",
+              dimensions: "day",
+            },
+          }
+        );
+
+        const analyticsData = analyticsRes.data;
+        const totalViews =
+          analyticsData.rows?.reduce(
+            (sum: number, row: any[]) => sum + row[1],
+            0
+          ) || 0;
+        const totalWatchTime =
+          analyticsData.rows?.reduce(
+            (sum: number, row: any[]) => sum + row[2],
+            0
+          ) || 0;
+        const totalSubscribers =
+          analyticsData.rows?.reduce(
+            (sum: number, row: any[]) => sum + row[3],
+            0
+          ) || 0;
+
+        const recentStats =
+          analyticsData.rows.map((row: any[]) => ({
+            date: row[0],
+            views: row[1],
+            watchTime: row[2],
+            subscribers: row[3],
+          })) || [];
+
         youtubeAssign.submitRequest(
           {
             youtubeId: res.data.sub,
             name: res.data.name,
             profilePicUrl: res.data.picture,
             email: res.data.email,
+            channelId: channelId,
+            channelStats: channelStats,
+            analytics: {
+              totalViews,
+              totalWatchTime,
+              totalSubscribers,
+              recentStats,
+            },
           },
           `users/${user?.id}/youtube`,
           true
         );
+
         setYoutubeProfile({
           youtubeId: res.data.sub,
           name: res.data.name,
           picture: res.data.picture,
           email: res.data.email,
+          channelId: channelId,
+          channelStats: channelStats,
+          analytics: {
+            totalViews,
+            totalWatchTime,
+            totalSubscribers,
+            recentStats,
+          },
         });
-      } catch (err) {
-        console.error("Failed to fetch user info", err);
+      } catch (err: any) {
+        console.error("API Error:", err.response?.data || err.message);
       }
     },
     onError: (error) => {
@@ -238,6 +341,7 @@ export default function SocialSettings() {
         `users/${user?.id}/youtube/unassign`,
         true
       );
+      setYoutubeProfile(null);
     } else if (platform === "tiktok") {
       setTiktokProfile(null);
     }
@@ -482,6 +586,115 @@ export default function SocialSettings() {
               </Button>
             )}
           </div>
+          {(youtubeProfile?.channelStats || youtubeProfile?.analytics) && (
+            <>
+              <Divider className="bg-zinc-800" />
+              <div className="px-5 py-3">
+                <h4 className="text-sm font-medium text-zinc-300 mb-3">
+                  Channel Statistics
+                </h4>
+
+                {youtubeProfile.channelStats && (
+                  <div className="flex gap-6 mb-4">
+                    <div className="text-center">
+                      <p className="text-zinc-400 text-xs">CHANNEL VIEWS</p>
+                      <p className="text-white font-medium">
+                        {parseInt(
+                          youtubeProfile.channelStats.viewCount
+                        ).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-zinc-400 text-xs">SUBSCRIBERS</p>
+                      <p className="text-white font-medium">
+                        {youtubeProfile.channelStats.hiddenSubscriberCount
+                          ? "Hidden"
+                          : parseInt(
+                              youtubeProfile.channelStats.subscriberCount
+                            ).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-zinc-400 text-xs">VIDEOS</p>
+                      <p className="text-white font-medium">
+                        {parseInt(
+                          youtubeProfile.channelStats.videoCount
+                        ).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {youtubeProfile.analytics && (
+                  <>
+                    <h4 className="text-sm font-medium text-zinc-300 mb-3 mt-4">
+                      Analytics (Last 6 Months)
+                    </h4>
+                    <div className="flex gap-6 mb-4">
+                      <div className="text-center">
+                        <p className="text-zinc-400 text-xs">TOTAL VIEWS</p>
+                        <p className="text-white font-medium">
+                          {youtubeProfile.analytics.totalViews.toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-zinc-400 text-xs">WATCH TIME</p>
+                        <p className="text-white font-medium">
+                          {Math.floor(
+                            youtubeProfile.analytics.totalWatchTime / 60
+                          )}{" "}
+                          hours
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-zinc-400 text-xs">
+                          SUBSCRIBERS GAINED
+                        </p>
+                        <p className="text-white font-medium">
+                          {youtubeProfile.analytics.totalSubscribers.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h5 className="text-xs font-medium text-zinc-400">
+                        RECENT ACTIVITY
+                      </h5>
+                      {youtubeProfile.analytics.recentStats.map(
+                        (stat, index) => (
+                          <div
+                            key={index}
+                            className="flex justify-between text-sm"
+                          >
+                            <span className="text-zinc-300">
+                              {new Date(stat.date).toLocaleDateString()}
+                            </span>
+                            <div className="flex gap-4">
+                              <span className="text-zinc-400">
+                                {stat.views} views
+                              </span>
+                              <span className="text-zinc-400">
+                                {stat.watchTime} mins
+                              </span>
+                              <span
+                                className={
+                                  stat.subscribers > 0
+                                    ? "text-green-400"
+                                    : "text-zinc-400"
+                                }
+                              >
+                                {stat.subscribers} subs
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            </>
+          )}
         </Card>
 
         <Card className="bg-zinc-900/60 border border-zinc-800 shadow-md overflow-hidden">

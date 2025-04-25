@@ -11,6 +11,7 @@ import {
   Chip,
   Divider,
   Spinner,
+  Progress,
 } from "@heroui/react";
 import {
   Play,
@@ -27,6 +28,8 @@ import { FaInstagram, FaTiktok, FaYoutube } from "react-icons/fa6";
 import { FaFacebook } from "react-icons/fa";
 import { useParams } from "react-router-dom";
 import { useAxios } from "../../hooks/fetch-api.hook";
+import axios from "axios";
+import { useGoogleLogin } from "@react-oauth/google";
 
 interface PostingTime {
   notes: string;
@@ -60,12 +63,61 @@ interface VideoData {
   cross_platform_tips: CrossPlatformTips;
 }
 
+const platformIcons = {
+  youtube: <FaYoutube size={24} className="text-red-500" />,
+  facebook: <FaFacebook size={24} className="text-blue-500" />,
+  instagram: <FaInstagram size={24} className="text-pink-500" />,
+  tiktok: <FaTiktok size={24} className="text-purple-500" />,
+};
+function PrivacySelector({
+  value,
+  onChange,
+}: {
+  value: "public" | "unlisted" | "private";
+  onChange: (value: "public" | "unlisted" | "private") => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2 mb-4">
+      <label className="text-sm font-medium text-gray-300">
+        Privacy Settings
+      </label>
+      <div className="flex gap-2">
+        {[
+          { value: "public", label: "Public", color: "bg-green-500/20" },
+          { value: "unlisted", label: "Unlisted", color: "bg-yellow-500/20" },
+          { value: "private", label: "Private", color: "bg-red-500/20" },
+        ].map((option) => (
+          <Button
+            key={option.value}
+            onPress={() => onChange(option.value as any)}
+            variant={value === option.value ? "solid" : "flat"}
+            className={`${
+              value === option.value ? option.color : "bg-gray-700/50"
+            } text-white`}
+            size="sm"
+          >
+            {option.label}
+          </Button>
+        ))}
+      </div>
+      <p className="text-xs text-gray-400">
+        {value === "public" && "Anyone can see this video"}
+        {value === "unlisted" && "Only people with the link can see this video"}
+        {value === "private" && "Only you can see this video"}
+      </p>
+    </div>
+  );
+}
 export default function VideoDetailsPage() {
   const { id } = useParams();
   const [videoData, setVideoData] = useState<VideoData | null>(null);
-
+  const [youtubeAccessToken, setYoutubeAccessToken] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
   const { data } = useAxios(`assembly/${id}`, "GET", {}, "data", false);
-
+  const [privacyStatus, setPrivacyStatus] = useState<
+    "public" | "unlisted" | "private"
+  >("public");
   useEffect(() => {
     if (id) data.submitRequest({}, `assembly/${id}`);
   }, [id]);
@@ -91,13 +143,83 @@ export default function VideoDetailsPage() {
     }
   };
 
-  const platformIcons = {
-    youtube: <FaYoutube size={24} className="text-red-500" />,
-    facebook: <FaFacebook size={24} className="text-blue-500" />,
-    instagram: <FaInstagram size={24} className="text-pink-500" />,
-    tiktok: <FaTiktok size={24} className="text-purple-500" />,
-  };
+  const handleYoutubeLogin = useGoogleLogin({
+    scope: [
+      "https://www.googleapis.com/auth/youtube.upload",
+      "https://www.googleapis.com/auth/youtube",
+    ].join(" "),
+    onSuccess: (tokenResponse) => {
+      setYoutubeAccessToken(tokenResponse.access_token);
+    },
+    onError: (error) => {
+      console.error("Login Failed:", error);
+    },
+  });
+  const uploadToYouTube = async () => {
+    if (!youtubeAccessToken || !videoData) return;
 
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    const metadata = {
+      snippet: {
+        title: videoData.youtube.title,
+        description: videoData.youtube.description,
+        tags: videoData.youtube.tags,
+      },
+      status: {
+        privacyStatus,
+      },
+    };
+
+    try {
+      const videoResponse = await fetch(videoData.originalAudioUrl);
+      const videoBlob = await videoResponse.blob();
+
+      const formData = new FormData();
+      formData.append(
+        "metadata",
+        new Blob([JSON.stringify(metadata)], { type: "application/json" })
+      );
+      formData.append("file", videoBlob);
+
+      const response = await axios.post(
+        "https://www.googleapis.com/upload/youtube/v3/videos?part=snippet,status",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${youtubeAccessToken}`,
+            "Content-Type": "multipart/related",
+          },
+          onUploadProgress: (progressEvent) => {
+            if (progressEvent.total) {
+              const percentCompleted = Math.round(
+                (progressEvent.loaded * 100) / progressEvent.total
+              );
+              setUploadProgress(percentCompleted);
+            }
+          },
+        }
+      );
+
+      window.open(`https://youtube.com/watch?v=${response.data.id}`, "_blank");
+    } catch (error: any) {
+      console.error("Error uploading video:", error);
+      if (
+        error.response?.data?.error?.message?.includes(
+          "exceeded the number of videos"
+        )
+      ) {
+        alert(
+          "Upload limit reached: Your YouTube account has exceeded its daily upload quota. Please try again tomorrow ."
+        );
+      } else {
+        alert("Failed to upload video");
+      }
+    } finally {
+      setIsUploading(false);
+    }
+  };
   if (data.loaded || !videoData) {
     return (
       <div className="flex flex-col justify-center text-center">
@@ -282,15 +404,6 @@ export default function VideoDetailsPage() {
                 ID: {videoData.id} • Created: {formatDate(videoData.createdAt)}
               </motion.p>
             </div>
-            <div className="flex gap-2">
-              <Button
-                color="primary"
-                startContent={<Share2 size={18} />}
-                className="bg-purple-800 text-white hover:bg-purple-900"
-              >
-                Share
-              </Button>
-            </div>
           </CardHeader>
 
           <CardBody className="p-4 md:p-6">
@@ -369,6 +482,14 @@ export default function VideoDetailsPage() {
                         data={
                           videoData[platform as keyof typeof videoData] as any
                         }
+                        youtubeAccessToken={youtubeAccessToken}
+                        isUploading={isUploading}
+                        uploadProgress={uploadProgress}
+                        handleYoutubeLogin={handleYoutubeLogin}
+                        uploadToYouTube={uploadToYouTube}
+                        setYoutubeAccessToken={setYoutubeAccessToken}
+                        privacyStatus={privacyStatus}
+                        setPrivacyStatus={setPrivacyStatus}
                       />
                     </Tab>
                   ))}
@@ -376,7 +497,6 @@ export default function VideoDetailsPage() {
               </motion.div>
             </div>
 
-            {/* Cross Platform Tips */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -438,9 +558,29 @@ interface PlatformCardProps {
       best_hours: string;
     };
   };
+  setYoutubeAccessToken: React.Dispatch<React.SetStateAction<string>>;
+  youtubeAccessToken: string;
+  isUploading: boolean;
+  uploadProgress: number;
+  handleYoutubeLogin: any;
+  uploadToYouTube: any;
+  privacyStatus: "public" | "unlisted" | "private";
+  setPrivacyStatus: React.Dispatch<
+    React.SetStateAction<"public" | "unlisted" | "private">
+  >;
 }
 
-function PlatformCard({ platform, data }: PlatformCardProps) {
+function PlatformCard({
+  platform,
+  data,
+  youtubeAccessToken,
+  isUploading,
+  uploadProgress,
+  handleYoutubeLogin,
+  uploadToYouTube,
+  privacyStatus,
+  setPrivacyStatus,
+}: PlatformCardProps) {
   const platformColors = {
     youtube: "bg-red-500/10 border-red-500/30 text-red-400",
     facebook: "bg-blue-500/10 border-blue-500/30 text-blue-400",
@@ -497,6 +637,43 @@ function PlatformCard({ platform, data }: PlatformCardProps) {
 
         <h4 className="text-xl font-bold">Posting Notes</h4>
         <p className="text-sm text-gray-300">{data.posting_time.notes}</p>
+        {platform === "youtube" && (
+          <div className="w-full mt-4 space-y-4">
+            <PrivacySelector
+              value={privacyStatus}
+              onChange={setPrivacyStatus}
+            />
+
+            {!youtubeAccessToken ? (
+              <Button
+                onPress={handleYoutubeLogin}
+                color="danger"
+                className="w-full bg-red-600 text-white"
+              >
+                Connect YouTube Account
+              </Button>
+            ) : (
+              <div className="space-y-2">
+                <Button
+                  onPress={uploadToYouTube}
+                  color="danger"
+                  className="w-full bg-red-600 text-white"
+                  isDisabled={isUploading}
+                  isLoading={isUploading}
+                >
+                  {isUploading ? "Uploading..." : "Upload to YouTube"}
+                </Button>
+                {isUploading && (
+                  <Progress
+                    value={uploadProgress}
+                    className="w-full"
+                    color="danger"
+                  />
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </CardFooter>
     </Card>
   );

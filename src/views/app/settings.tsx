@@ -85,8 +85,120 @@ export default function SocialSettings() {
   const [tiktokProfile, setTiktokProfile] = useState<TiktokProfile | null>(
     null
   );
+  const [isRefreshingYoutube, setIsRefreshingYoutube] = useState(false);
+  const [youtubeToken, setYoutubeToken] = useState<string | null>(null);
+  const fetchYoutubeData = async (tokenResponse: { access_token: string }) => {
+    try {
+      const res = await axios.get(
+        "https://www.googleapis.com/oauth2/v3/userinfo",
+        {
+          headers: {
+            Authorization: `Bearer ${tokenResponse.access_token}`,
+          },
+        }
+      );
 
+      const channelRes = await axios.get(
+        "https://www.googleapis.com/youtube/v3/channels",
+        {
+          headers: {
+            Authorization: `Bearer ${tokenResponse.access_token}`,
+          },
+          params: {
+            part: "snippet,statistics",
+            mine: true,
+          },
+        }
+      );
+
+      const channelData = channelRes.data.items[0];
+      const channelStats = channelData.statistics;
+      const channelId = channelData.id;
+
+      const analyticsRes = await axios.get(
+        "https://youtubeanalytics.googleapis.com/v2/reports",
+        {
+          headers: {
+            Authorization: `Bearer ${tokenResponse.access_token}`,
+          },
+          params: {
+            ids: "channel==MINE",
+            startDate: "2024-01-01",
+            endDate: new Date().toISOString().split("T")[0],
+            metrics: "views,estimatedMinutesWatched,subscribersGained",
+            dimensions: "day",
+          },
+        }
+      );
+
+      const analyticsData = analyticsRes.data;
+      const totalViews =
+        analyticsData.rows?.reduce(
+          (sum: number, row: any[]) => sum + row[1],
+          0
+        ) || 0;
+      const totalWatchTime =
+        analyticsData.rows?.reduce(
+          (sum: number, row: any[]) => sum + row[2],
+          0
+        ) || 0;
+      const totalSubscribers =
+        analyticsData.rows?.reduce(
+          (sum: number, row: any[]) => sum + row[3],
+          0
+        ) || 0;
+
+      const recentStats =
+        analyticsData.rows?.map((row: any[]) => ({
+          date: row[0],
+          views: row[1],
+          watchTime: row[2],
+          subscribers: row[3],
+        })) || [];
+
+      youtubeAssign.submitRequest(
+        {
+          youtubeId: res.data.sub,
+          name: res.data.name,
+          profilePicUrl: res.data.picture,
+          email: res.data.email,
+          channelId: channelId,
+          channelStats: channelStats,
+          analytics: {
+            totalViews,
+            totalWatchTime,
+            totalSubscribers,
+            recentStats,
+          },
+        },
+        `users/${user?.id}/youtube`,
+        false
+      );
+
+      setYoutubeProfile({
+        youtubeId: res.data.sub,
+        name: res.data.name,
+        picture: res.data.picture,
+        email: res.data.email,
+        channelId: channelId,
+        channelStats: channelStats,
+        analytics: {
+          totalViews,
+          totalWatchTime,
+          totalSubscribers,
+          recentStats,
+        },
+      });
+    } catch (err: any) {
+      console.error("API Error:", err.response?.data || err.message);
+      throw err;
+    }
+  };
   useEffect(() => {
+    const youtubeToken = localStorage.getItem("youtubeToken");
+    if (youtubeToken) {
+      setYoutubeToken(youtubeToken);
+    }
     if (userData.responseData) {
       setFacebookProfile(userData.responseData.facebookProfile);
       setInstagramProfile(userData.responseData.instagram);
@@ -136,7 +248,7 @@ export default function SocialSettings() {
     false
   );
   const handleLoginFb = () => {
-    (window as any).FB.login(
+    window.FB.login(
       (response: any) => {
         if (response.authResponse) {
           fetchUserFbProfile();
@@ -147,6 +259,7 @@ export default function SocialSettings() {
       { scope: "public_profile,email" }
     );
   };
+
   const handleLoginYt = useGoogleLogin({
     scope: [
       "https://www.googleapis.com/auth/userinfo.profile",
@@ -157,109 +270,9 @@ export default function SocialSettings() {
       "https://www.googleapis.com/auth/yt-analytics-monetary.readonly",
     ].join(" "),
     onSuccess: async (tokenResponse) => {
-      try {
-        const res = await axios.get(
-          "https://www.googleapis.com/oauth2/v3/userinfo",
-          {
-            headers: {
-              Authorization: `Bearer ${tokenResponse.access_token}`,
-            },
-          }
-        );
-
-        const channelRes = await axios.get(
-          "https://www.googleapis.com/youtube/v3/channels",
-          {
-            headers: {
-              Authorization: `Bearer ${tokenResponse.access_token}`,
-            },
-            params: {
-              part: "snippet,statistics",
-              mine: true,
-            },
-          }
-        );
-
-        const channelData = channelRes.data.items[0];
-        const channelStats = channelData.statistics;
-        const channelId = channelData.id;
-
-        const analyticsRes = await axios.get(
-          "https://youtubeanalytics.googleapis.com/v2/reports",
-          {
-            headers: {
-              Authorization: `Bearer ${tokenResponse.access_token}`,
-            },
-            params: {
-              startDate: "2024-01-01",
-              endDate: new Date().toISOString().split("T")[0],
-              metrics: "views,estimatedMinutesWatched,subscribersGained",
-              dimensions: "day",
-            },
-          }
-        );
-
-        const analyticsData = analyticsRes.data;
-        const totalViews =
-          analyticsData.rows?.reduce(
-            (sum: number, row: any[]) => sum + row[1],
-            0
-          ) || 0;
-        const totalWatchTime =
-          analyticsData.rows?.reduce(
-            (sum: number, row: any[]) => sum + row[2],
-            0
-          ) || 0;
-        const totalSubscribers =
-          analyticsData.rows?.reduce(
-            (sum: number, row: any[]) => sum + row[3],
-            0
-          ) || 0;
-
-        const recentStats =
-          analyticsData.rows.map((row: any[]) => ({
-            date: row[0],
-            views: row[1],
-            watchTime: row[2],
-            subscribers: row[3],
-          })) || [];
-
-        youtubeAssign.submitRequest(
-          {
-            youtubeId: res.data.sub,
-            name: res.data.name,
-            profilePicUrl: res.data.picture,
-            email: res.data.email,
-            channelId: channelId,
-            channelStats: channelStats,
-            analytics: {
-              totalViews,
-              totalWatchTime,
-              totalSubscribers,
-              recentStats,
-            },
-          },
-          `users/${user?.id}/youtube`,
-          true
-        );
-
-        setYoutubeProfile({
-          youtubeId: res.data.sub,
-          name: res.data.name,
-          picture: res.data.picture,
-          email: res.data.email,
-          channelId: channelId,
-          channelStats: channelStats,
-          analytics: {
-            totalViews,
-            totalWatchTime,
-            totalSubscribers,
-            recentStats,
-          },
-        });
-      } catch (err: any) {
-        console.error("API Error:", err.response?.data || err.message);
-      }
+      setYoutubeToken(tokenResponse.access_token);
+      localStorage.setItem("youtubeToken", tokenResponse.access_token);
+      await fetchYoutubeData(tokenResponse);
     },
     onError: (error) => {
       console.error("Login Failed:", error);
@@ -267,8 +280,9 @@ export default function SocialSettings() {
   });
 
   const fetchUserFbProfile = () => {
-    (window as any).FB.api(
+    window.FB.api(
       "/me",
+      "GET",
       {
         fields:
           "id,name,first_name,last_name,email,picture.width(200).height(200),gender,birthday,location,hometown,link",
@@ -311,6 +325,32 @@ export default function SocialSettings() {
     });
   };
 
+  const handleRefreshYoutube = async () => {
+    if (!youtubeToken) {
+      console.error("No YouTube token available");
+      return;
+    }
+
+    try {
+      setIsRefreshingYoutube(true);
+      try {
+        await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
+          headers: {
+            Authorization: `Bearer ${youtubeToken}`,
+          },
+        });
+
+        await fetchYoutubeData({ access_token: youtubeToken });
+      } catch (error) {
+        console.log("Token expired or invalid, re-authenticating...");
+        handleLoginYt();
+      }
+    } catch (error) {
+      console.error("Refresh failed:", error);
+    } finally {
+      setIsRefreshingYoutube(false);
+    }
+  };
   const handleConnect = (platform: string) => {
     if (platform === "facebook") {
       handleLoginFb();
@@ -336,6 +376,7 @@ export default function SocialSettings() {
       setInstagramProfile(null);
     } else if (platform === "youtube") {
       setYoutubeProfile(null);
+      localStorage.removeItem("youtubeToken");
       youtubeUnAssign.submitRequest(
         {},
         `users/${user?.id}/youtube/unassign`,
@@ -565,14 +606,27 @@ export default function SocialSettings() {
                     <span>{youtubeProfile.name}</span>
                   </div>
                 </div>
-                <Button
-                  onPress={() => handleDisconnect("youtube")}
-                  color="danger"
-                  variant="flat"
-                  size="sm"
-                >
-                  Disconnect
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    onPress={handleRefreshYoutube}
+                    color="success"
+                    variant="flat"
+                    size="sm"
+                    isLoading={isRefreshingYoutube}
+                    isDisabled={isRefreshingYoutube}
+                  >
+                    {isRefreshingYoutube ? "Refreshing..." : "Refresh Stats"}
+                  </Button>
+                  <Button
+                    onPress={() => handleDisconnect("youtube")}
+                    color="danger"
+                    variant="flat"
+                    size="sm"
+                    isDisabled={isRefreshingYoutube}
+                  >
+                    Disconnect
+                  </Button>
+                </div>
               </div>
             ) : (
               <Button
@@ -623,74 +677,6 @@ export default function SocialSettings() {
                       </p>
                     </div>
                   </div>
-                )}
-
-                {youtubeProfile.analytics && (
-                  <>
-                    <h4 className="text-sm font-medium text-zinc-300 mb-3 mt-4">
-                      Analytics (Last 6 Months)
-                    </h4>
-                    <div className="flex gap-6 mb-4">
-                      <div className="text-center">
-                        <p className="text-zinc-400 text-xs">TOTAL VIEWS</p>
-                        <p className="text-white font-medium">
-                          {youtubeProfile.analytics.totalViews.toLocaleString()}
-                        </p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-zinc-400 text-xs">WATCH TIME</p>
-                        <p className="text-white font-medium">
-                          {Math.floor(
-                            youtubeProfile.analytics.totalWatchTime / 60
-                          )}{" "}
-                          hours
-                        </p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-zinc-400 text-xs">
-                          SUBSCRIBERS GAINED
-                        </p>
-                        <p className="text-white font-medium">
-                          {youtubeProfile.analytics.totalSubscribers.toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <h5 className="text-xs font-medium text-zinc-400">
-                        RECENT ACTIVITY
-                      </h5>
-                      {youtubeProfile.analytics.recentStats.map(
-                        (stat, index) => (
-                          <div
-                            key={index}
-                            className="flex justify-between text-sm"
-                          >
-                            <span className="text-zinc-300">
-                              {new Date(stat.date).toLocaleDateString()}
-                            </span>
-                            <div className="flex gap-4">
-                              <span className="text-zinc-400">
-                                {stat.views} views
-                              </span>
-                              <span className="text-zinc-400">
-                                {stat.watchTime} mins
-                              </span>
-                              <span
-                                className={
-                                  stat.subscribers > 0
-                                    ? "text-green-400"
-                                    : "text-zinc-400"
-                                }
-                              >
-                                {stat.subscribers} subs
-                              </span>
-                            </div>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </>
                 )}
               </div>
             </>

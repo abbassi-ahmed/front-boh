@@ -1,6 +1,6 @@
 import { Card, Button, Avatar, Chip, Divider } from "@heroui/react";
 import { useEffect, useState } from "react";
-import { FaFacebook, FaInstagram, FaTiktok, FaYoutube } from "react-icons/fa6";
+import { FaFacebook, FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa6";
 import { MdVerified } from "react-icons/md";
 import { useAxios } from "../../hooks/fetch-api.hook";
 import { useAuth } from "../../context/AuthContext";
@@ -55,7 +55,7 @@ interface YoutubeProfile {
   };
 }
 
-interface TiktokProfile {
+interface TwitterProfile {
   username: string;
   followers: number;
   likes: number;
@@ -82,7 +82,7 @@ export default function SocialSettings() {
   const [youtubeProfile, setYoutubeProfile] = useState<YoutubeProfile | null>(
     null
   );
-  const [tiktokProfile, setTiktokProfile] = useState<TiktokProfile | null>(
+  const [twitterProfile, setTwitterProfile] = useState<TwitterProfile | null>(
     null
   );
   const [isRefreshingYoutube, setIsRefreshingYoutube] = useState(false);
@@ -213,7 +213,7 @@ export default function SocialSettings() {
           analytics: userData.responseData.youtubeProfile.analytics,
         });
       }
-      setTiktokProfile(userData.responseData.tiktok);
+      setTwitterProfile(userData.responseData.twitter);
     }
   }, [userData.responseData]);
 
@@ -314,8 +314,8 @@ export default function SocialSettings() {
     });
   };
 
-  const handleLoginTikTok = () => {
-    setTiktokProfile({
+  const handleLoginTwitter = () => {
+    setTwitterProfile({
       username: "@johndoe",
       followers: 15700,
       likes: 124300,
@@ -356,8 +356,8 @@ export default function SocialSettings() {
       handleLoginFb();
     } else if (platform === "instagram") {
       handleLoginInstagram();
-    } else if (platform === "tiktok") {
-      handleLoginTikTok();
+    } else if (platform === "twitter") {
+      handleLoginTwitter();
     } else if (platform === "youtube") {
       handleLoginYt();
     }
@@ -383,8 +383,8 @@ export default function SocialSettings() {
         true
       );
       setYoutubeProfile(null);
-    } else if (platform === "tiktok") {
-      setTiktokProfile(null);
+    } else if (platform === "twitter") {
+      setTwitterProfile(null);
     }
   };
 
@@ -688,18 +688,18 @@ export default function SocialSettings() {
             <div className="flex items-center gap-4">
               <div className="relative">
                 <Avatar
-                  icon={<FaTiktok size={20} />}
+                  icon={<FaTwitter size={20} />}
                   className="bg-zinc-800 text-white h-12 w-12"
-                  src={tiktokProfile?.profilePic}
+                  src={twitterProfile?.profilePic}
                 />
                 <div className="absolute -bottom-1 -right-1 bg-black rounded-full p-1">
-                  <FaTiktok size={12} className="text-white" />
+                  <FaTwitter size={12} className="text-white" />
                 </div>
               </div>
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-white text-lg">
-                    TikTok
+                    Twitter
                   </span>
                   <Chip
                     size="sm"
@@ -710,26 +710,26 @@ export default function SocialSettings() {
                   </Chip>
                 </div>
                 <p className="text-zinc-400 text-sm">
-                  Connect your TikTok creator account
+                  Connect your Twitter creator account
                 </p>
               </div>
             </div>
 
-            {tiktokProfile ? (
+            {twitterProfile ? (
               <div className="flex flex-col sm:flex-row sm:items-center gap-4 mt-2 sm:mt-0">
                 <div className="text-sm">
                   <div className="flex items-center gap-2 text-white">
-                    <span>{tiktokProfile.username}</span>
-                    {tiktokProfile.verified && (
+                    <span>{twitterProfile.username}</span>
+                    {twitterProfile.verified && (
                       <MdVerified className="text-teal-400" size={16} />
                     )}
                   </div>
                   <p className="text-zinc-400">
-                    {tiktokProfile.followers.toLocaleString()} followers
+                    {twitterProfile.followers.toLocaleString()} followers
                   </p>
                 </div>
                 <Button
-                  onPress={() => handleDisconnect("tiktok")}
+                  onPress={() => handleDisconnect("twitter")}
                   color="danger"
                   variant="flat"
                   size="sm"
@@ -739,7 +739,7 @@ export default function SocialSettings() {
               </div>
             ) : (
               <Button
-                onPress={() => handleConnect("tiktok")}
+                onPress={() => handleConnect("twitter")}
                 color="default"
                 variant="solid"
                 size="sm"

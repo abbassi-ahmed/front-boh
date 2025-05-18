@@ -3,7 +3,7 @@ import { Tabs, Tab, Card, CardBody } from "@heroui/react";
 
 import { Platform, PlatformKey } from "../views/app/my-videos";
 import PlatformContent from "./platform-content";
-import { FaFacebook, FaInstagram, FaTiktok, FaYoutube } from "react-icons/fa6";
+import { FaFacebook, FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa6";
 const PLATFORMS: Platform[] = [
   {
     key: "youtube",
@@ -11,9 +11,9 @@ const PLATFORMS: Platform[] = [
     icon: <FaYoutube className="w-5 h-5 text-red-500" />,
   },
   {
-    key: "tiktok",
-    name: "TikTok",
-    icon: <FaTiktok className="w-5 h-5 text-purple-500" />,
+    key: "twitter",
+    name: "Twitter",
+    icon: <FaTwitter className="w-5 h-5 text-purple-500" />,
   },
   {
     key: "facebook",

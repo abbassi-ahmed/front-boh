@@ -9,7 +9,7 @@ import { addToast } from "@heroui/react";
 import { useAxios } from "../../hooks/fetch-api.hook";
 import RenderPlatformTabs from "../../components/renderPlatformTabs";
 
-export type PlatformKey = "youtube" | "tiktok" | "facebook" | "instagram";
+export type PlatformKey = "youtube" | "twitter" | "facebook" | "instagram";
 
 export interface Platform {
   key: PlatformKey;
@@ -92,7 +92,7 @@ export default function MyVideos() {
         youtube: generatedContent.youtube,
         facebook: generatedContent.facebook,
         instagram: generatedContent.instagram,
-        tiktok: generatedContent.tiktok,
+        twitter: generatedContent.twitter,
         cross_platform_tips: generatedContent.cross_platform_tips,
       };
 

@@ -16,6 +16,7 @@ const navItems = [
   { path: "/user/home", icon: HomeIcon, label: "Statistics" },
   { path: "/user/my-videos", icon: VideoIcon, label: "My Videos" },
   { path: "/user/settings", icon: Settings, label: "Settings" },
+  { path: "/user/test", icon: Settings, label: "test" },
 ];
 
 export default function Sidebar() {

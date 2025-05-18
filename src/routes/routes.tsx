@@ -10,6 +10,7 @@ import DefaultLayout from "../layouts/default";
 import MyVideos from "../views/app/my-videos";
 import VideoDetailsPage from "../views/app/videoDetailPage";
 import Settings from "../views/app/settings";
+import TwitterPost from "../views/app/tesT";
 
 const AppRoutes = () => {
   return (
@@ -44,6 +45,7 @@ const AppRoutes = () => {
             <Route path="my-videos" element={<MyVideos />} />
             <Route path="settings" element={<Settings />} />
             <Route path="video-detail/:id" element={<VideoDetailsPage />} />
+            <Route path="test" element={<TwitterPost />} />
             <Route index element={<HomePage />} />
           </Route>
           <Route

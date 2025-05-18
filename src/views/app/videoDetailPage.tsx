@@ -12,19 +12,11 @@ import {
   Divider,
   Spinner,
   Progress,
+  addToast,
 } from "@heroui/react";
-import {
-  Play,
-  Pause,
-  Clock,
-  Calendar,
-  Tag,
-  Globe,
-  Share2,
-  Info,
-} from "lucide-react";
+import { Play, Pause, Clock, Calendar, Tag, Globe, Info } from "lucide-react";
 import { formatDate } from "../../utils/formatDate";
-import { FaInstagram, FaTiktok, FaYoutube } from "react-icons/fa6";
+import { FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa6";
 import { FaFacebook } from "react-icons/fa";
 import { useParams } from "react-router-dom";
 import { useAxios } from "../../hooks/fetch-api.hook";
@@ -59,7 +51,7 @@ interface VideoData {
   youtube: PlatformData;
   facebook: PlatformData;
   instagram: PlatformData;
-  tiktok: PlatformData;
+  twitter: PlatformData;
   cross_platform_tips: CrossPlatformTips;
 }
 
@@ -67,7 +59,7 @@ const platformIcons = {
   youtube: <FaYoutube size={24} className="text-red-500" />,
   facebook: <FaFacebook size={24} className="text-blue-500" />,
   instagram: <FaInstagram size={24} className="text-pink-500" />,
-  tiktok: <FaTiktok size={24} className="text-purple-500" />,
+  twitter: <FaTwitter size={24} className="text-purple-500" />,
 };
 function PrivacySelector({
   value,
@@ -113,6 +105,7 @@ export default function VideoDetailsPage() {
   const [videoData, setVideoData] = useState<VideoData | null>(null);
   const [youtubeAccessToken, setYoutubeAccessToken] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
+
   const [isUploading, setIsUploading] = useState(false);
   const { data } = useAxios(`assembly/${id}`, "GET", {}, "data", false);
   const [privacyStatus, setPrivacyStatus] = useState<
@@ -155,6 +148,7 @@ export default function VideoDetailsPage() {
       console.error("Login Failed:", error);
     },
   });
+
   const uploadToYouTube = async () => {
     if (!youtubeAccessToken || !videoData) return;
 
@@ -229,6 +223,27 @@ export default function VideoDetailsPage() {
     );
   }
 
+  const handlePostToTwitter = async () => {
+    try {
+      setIsUploading(true);
+      await axios
+        .post("http://localhost:3000/api/twitter/post", {
+          text: `${videoData.twitter.title} description: ${videoData.twitter.description}`,
+          videoUrl: videoData.originalAudioUrl,
+        })
+        .then((res) => {
+          addToast({
+            title: "Success",
+            description: "Tweet posted successfully!",
+          });
+        });
+    } catch (error) {
+      console.error("Error posting tweet:", error);
+      alert("Failed to post tweet");
+    } finally {
+      setIsUploading(false);
+    }
+  };
   const renderPlatformPreview = () => {
     switch (activePlatform) {
       case "youtube":
@@ -313,7 +328,7 @@ export default function VideoDetailsPage() {
             </div>
           </div>
         );
-      case "tiktok":
+      case "twitter":
         return (
           <div className="relative w-full h-full bg-black rounded-lg overflow-hidden border border-purple-500/30">
             <div className="absolute top-0 left-0 right-0 h-10 flex items-center px-3 justify-between">
@@ -329,13 +344,13 @@ export default function VideoDetailsPage() {
             />
             <div className="absolute bottom-0 left-0 right-0 p-3">
               <div className="text-white font-medium">
-                @user123 • {videoData.tiktok.title}
+                @user123 • {videoData.twitter.title}
               </div>
               <div className="text-white text-sm mt-1">
-                {videoData.tiktok.description}
+                {videoData.twitter.description}
               </div>
               <div className="flex mt-2 space-x-2">
-                {videoData.tiktok.tags.slice(0, 3).map((tag, i) => (
+                {videoData.twitter.tags.slice(0, 3).map((tag, i) => (
                   <span key={i} className="text-blue-300 text-xs">
                     #{tag}
                   </span>
@@ -490,6 +505,7 @@ export default function VideoDetailsPage() {
                         setYoutubeAccessToken={setYoutubeAccessToken}
                         privacyStatus={privacyStatus}
                         setPrivacyStatus={setPrivacyStatus}
+                        handlePostToTwitter={handlePostToTwitter}
                       />
                     </Tab>
                   ))}
@@ -565,6 +581,7 @@ interface PlatformCardProps {
   handleYoutubeLogin: any;
   uploadToYouTube: any;
   privacyStatus: "public" | "unlisted" | "private";
+  handlePostToTwitter: any;
   setPrivacyStatus: React.Dispatch<
     React.SetStateAction<"public" | "unlisted" | "private">
   >;
@@ -579,13 +596,14 @@ function PlatformCard({
   handleYoutubeLogin,
   uploadToYouTube,
   privacyStatus,
+  handlePostToTwitter,
   setPrivacyStatus,
 }: PlatformCardProps) {
   const platformColors = {
     youtube: "bg-red-500/10 border-red-500/30 text-red-400",
     facebook: "bg-blue-500/10 border-blue-500/30 text-blue-400",
     instagram: "bg-pink-500/10 border-pink-500/30 text-pink-400",
-    tiktok: "bg-purple-500/10 border-purple-500/30 text-purple-400",
+    twitter: "bg-purple-500/10 border-purple-500/30 text-purple-400",
   };
 
   const colorClass = platformColors[platform as keyof typeof platformColors];
@@ -637,6 +655,26 @@ function PlatformCard({
 
         <h4 className="text-xl font-bold">Posting Notes</h4>
         <p className="text-sm text-gray-300">{data.posting_time.notes}</p>
+        {platform === "twitter" && (
+          <div className="w-full mt-4 space-y-4">
+            <Button
+              color="secondary"
+              onPress={handlePostToTwitter}
+              className="w-full bg-purple-600 text-white"
+              isDisabled={isUploading}
+              isLoading={isUploading}
+            >
+              {isUploading ? "Uploading to Twitter..." : "Post to Twitter"}
+            </Button>
+            {isUploading && (
+              <Progress
+                value={uploadProgress}
+                className="w-full"
+                color="secondary"
+              />
+            )}
+          </div>
+        )}
         {platform === "youtube" && (
           <div className="w-full mt-4 space-y-4">
             <PrivacySelector

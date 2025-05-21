@@ -1,59 +1,97 @@
+import { useState, useEffect } from "react";
 import axios from "axios";
-import { useState } from "react";
 
-export default function TwitterPost() {
-  const [text, setText] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+export default function TwitterTest() {
+  const [authUrl, setAuthUrl] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
+  const [error, setError] = useState("");
 
-  const handleSubmit = async () => {
-    setIsLoading(true);
+  useEffect(() => {
+    const initiateTwitterAuth = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:3000/api/twitter/test"
+        );
+        setAuthUrl(response.data.data.url);
+      } catch (err) {
+        setError("Failed to initiate Twitter authentication");
+        console.error(err);
+      }
+    };
 
-    try {
-      await axios
-        .post("http://localhost:3000/api/twitter/post", {
-          text,
-          videoUrl: videoUrl || undefined,
-        })
-        .then((res) => {
-          console.log(res);
-          alert("Tweet posted successfully!");
-        });
-    } catch (error) {
-      console.error("Error posting tweet:", error);
-      alert("Failed to post tweet");
-    } finally {
-      setIsLoading(false);
+    initiateTwitterAuth();
+  }, []);
+
+  useEffect(() => {
+    const storedOauthData = JSON.parse(
+      localStorage.getItem("oauth_data") || "{}"
+    );
+
+    if (storedOauthData.oauth_token && storedOauthData.user_id) {
+      setIsAuthenticated(true);
+      setUserData(storedOauthData);
     }
+  }, []);
+
+  const handleLogin = () => {
+    window.location.href = authUrl;
   };
 
   return (
-    <div className="bg-white h-full w-full p-4">
-      <h2 className="text-xl mb-4">Twitter Post</h2>
-      <textarea
-        className="w-full border p-2 mb-4"
-        rows={4}
-        placeholder="Write your tweet..."
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-      />
-      <div className="mb-4">
-        <label className="block mb-2">Video URL (optional):</label>
-        <input
-          type="text"
-          className="w-full border p-2"
-          placeholder="https://example.com/video.mp4"
-          value={videoUrl}
-          onChange={(e) => setVideoUrl(e.target.value)}
-        />
-      </div>
-      <button
-        className="bg-blue-500 text-white px-4 py-2 rounded"
-        onClick={handleSubmit}
-        disabled={isLoading}
-      >
-        {isLoading ? "Posting..." : "Post Tweet"}
-      </button>
+    <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
+      <h1>Twitter OAuth Integration</h1>
+
+      {error && (
+        <div style={{ color: "red", marginBottom: "15px" }}>{error}</div>
+      )}
+
+      {!isAuthenticated ? (
+        <div>
+          <p>Click the button below to authenticate with Twitter:</p>
+          <button
+            onClick={handleLogin}
+            disabled={!authUrl}
+            style={{
+              padding: "10px 15px",
+              backgroundColor: "#1DA1F2",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+              opacity: authUrl ? 1 : 0.5,
+            }}
+          >
+            Sign in with Twitter
+          </button>
+          {!authUrl && (
+            <p style={{ color: "#666" }}>Loading authentication...</p>
+          )}
+        </div>
+      ) : (
+        <div>
+          <h2>Successfully Authenticated!</h2>
+          {userData && (
+            <div style={{ marginBottom: "20px" }}>
+              <p>User ID: {userData.user_id}</p>
+              <p>Screen Name: @{userData.screen_name}</p>
+            </div>
+          )}
+
+          <button
+            style={{
+              padding: "10px 15px",
+              backgroundColor: "#1DA1F2",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+          >
+            Post Test Tweet
+          </button>
+        </div>
+      )}
     </div>
   );
 }

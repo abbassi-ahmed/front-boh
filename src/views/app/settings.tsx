@@ -77,14 +77,15 @@ export default function SocialSettings() {
 
   const [facebookProfile, setFacebookProfile] =
     useState<FacebookProfile | null>(null);
+  const [authUrl, setAuthUrl] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [twitterProfile, setTwitterProfile] = useState<any>(null);
   const [instagramProfile, setInstagramProfile] =
     useState<InstagramProfile | null>(null);
   const [youtubeProfile, setYoutubeProfile] = useState<YoutubeProfile | null>(
     null
   );
-  const [twitterProfile, setTwitterProfile] = useState<TwitterProfile | null>(
-    null
-  );
+
   const [isRefreshingYoutube, setIsRefreshingYoutube] = useState(false);
   const [youtubeToken, setYoutubeToken] = useState<string | null>(null);
   const fetchYoutubeData = async (tokenResponse: { access_token: string }) => {
@@ -213,7 +214,6 @@ export default function SocialSettings() {
           analytics: userData.responseData.youtubeProfile.analytics,
         });
       }
-      setTwitterProfile(userData.responseData.twitter);
     }
   }, [userData.responseData]);
 
@@ -247,6 +247,30 @@ export default function SocialSettings() {
     "youtubeUnAssign",
     false
   );
+  useEffect(() => {
+    const initiateTwitterAuth = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:3000/api/twitter/test"
+        );
+        setAuthUrl(response.data.data.url);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    initiateTwitterAuth();
+  }, []);
+  useEffect(() => {
+    const storedOauthData = JSON.parse(
+      localStorage.getItem("oauth_data") || "{}"
+    );
+
+    if (storedOauthData.oauth_token && storedOauthData.user_id) {
+      setIsAuthenticated(true);
+      setTwitterProfile(storedOauthData);
+    }
+  }, []);
   const handleLoginFb = () => {
     window.FB.login(
       (response: any) => {
@@ -268,6 +292,8 @@ export default function SocialSettings() {
       "https://www.googleapis.com/auth/youtube.readonly",
       "https://www.googleapis.com/auth/youtube",
       "https://www.googleapis.com/auth/yt-analytics-monetary.readonly",
+      "https://www.googleapis.com/auth/youtube.upload",
+      "https://www.googleapis.com/auth/youtube",
     ].join(" "),
     onSuccess: async (tokenResponse) => {
       setYoutubeToken(tokenResponse.access_token);
@@ -315,14 +341,7 @@ export default function SocialSettings() {
   };
 
   const handleLoginTwitter = () => {
-    setTwitterProfile({
-      username: "@johndoe",
-      followers: 15700,
-      likes: 124300,
-      videos: 87,
-      verified: true,
-      profilePic: "https://randomuser.me/api/portraits/men/45.jpg",
-    });
+    window.location.href = authUrl;
   };
 
   const handleRefreshYoutube = async () => {
@@ -342,7 +361,6 @@ export default function SocialSettings() {
 
         await fetchYoutubeData({ access_token: youtubeToken });
       } catch (error) {
-        console.log("Token expired or invalid, re-authenticating...");
         handleLoginYt();
       }
     } catch (error) {
@@ -385,6 +403,8 @@ export default function SocialSettings() {
       setYoutubeProfile(null);
     } else if (platform === "twitter") {
       setTwitterProfile(null);
+      localStorage.removeItem("oauth_data");
+      setIsAuthenticated(false);
     }
   };
 
@@ -719,14 +739,9 @@ export default function SocialSettings() {
               <div className="flex flex-col sm:flex-row sm:items-center gap-4 mt-2 sm:mt-0">
                 <div className="text-sm">
                   <div className="flex items-center gap-2 text-white">
-                    <span>{twitterProfile.username}</span>
-                    {twitterProfile.verified && (
-                      <MdVerified className="text-teal-400" size={16} />
-                    )}
+                    <span>@{twitterProfile.screen_name}</span>
+                    <MdVerified className="text-teal-400" size={16} />
                   </div>
-                  <p className="text-zinc-400">
-                    {twitterProfile.followers.toLocaleString()} followers
-                  </p>
                 </div>
                 <Button
                   onPress={() => handleDisconnect("twitter")}

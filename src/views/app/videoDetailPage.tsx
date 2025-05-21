@@ -18,10 +18,9 @@ import { Play, Pause, Clock, Calendar, Tag, Globe, Info } from "lucide-react";
 import { formatDate } from "../../utils/formatDate";
 import { FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa6";
 import { FaFacebook } from "react-icons/fa";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAxios } from "../../hooks/fetch-api.hook";
 import axios from "axios";
-import { useGoogleLogin } from "@react-oauth/google";
 
 interface PostingTime {
   notes: string;
@@ -105,6 +104,9 @@ export default function VideoDetailsPage() {
   const [videoData, setVideoData] = useState<VideoData | null>(null);
   const [youtubeAccessToken, setYoutubeAccessToken] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
+  const navigate = useNavigate();
 
   const [isUploading, setIsUploading] = useState(false);
   const { data } = useAxios(`assembly/${id}`, "GET", {}, "data", false);
@@ -135,19 +137,25 @@ export default function VideoDetailsPage() {
         .catch((error) => console.error("Error playing video:", error));
     }
   };
+  useEffect(() => {
+    const storedOauthData = JSON.parse(
+      localStorage.getItem("oauth_data") || "{}"
+    );
 
-  const handleYoutubeLogin = useGoogleLogin({
-    scope: [
-      "https://www.googleapis.com/auth/youtube.upload",
-      "https://www.googleapis.com/auth/youtube",
-    ].join(" "),
-    onSuccess: (tokenResponse) => {
-      setYoutubeAccessToken(tokenResponse.access_token);
-    },
-    onError: (error) => {
-      console.error("Login Failed:", error);
-    },
-  });
+    if (storedOauthData.oauth_token && storedOauthData.user_id) {
+      setIsAuthenticated(true);
+      setUserData(storedOauthData);
+    }
+  }, []);
+  useEffect(() => {
+    const token = localStorage.getItem("youtubeToken");
+    if (token) {
+      setYoutubeAccessToken(token);
+    }
+  }, []);
+  const handleYoutubeLogin = async () => {
+    navigate("/user/settings");
+  };
 
   const uploadToYouTube = async () => {
     if (!youtubeAccessToken || !videoData) return;
@@ -497,6 +505,7 @@ export default function VideoDetailsPage() {
                         data={
                           videoData[platform as keyof typeof videoData] as any
                         }
+                        isTwitterAuthenticated={isAuthenticated}
                         youtubeAccessToken={youtubeAccessToken}
                         isUploading={isUploading}
                         uploadProgress={uploadProgress}
@@ -582,6 +591,7 @@ interface PlatformCardProps {
   uploadToYouTube: any;
   privacyStatus: "public" | "unlisted" | "private";
   handlePostToTwitter: any;
+  isTwitterAuthenticated: boolean;
   setPrivacyStatus: React.Dispatch<
     React.SetStateAction<"public" | "unlisted" | "private">
   >;
@@ -598,7 +608,9 @@ function PlatformCard({
   privacyStatus,
   handlePostToTwitter,
   setPrivacyStatus,
+  isTwitterAuthenticated,
 }: PlatformCardProps) {
+  const navigate = useNavigate();
   const platformColors = {
     youtube: "bg-red-500/10 border-red-500/30 text-red-400",
     facebook: "bg-blue-500/10 border-blue-500/30 text-blue-400",
@@ -657,21 +669,35 @@ function PlatformCard({
         <p className="text-sm text-gray-300">{data.posting_time.notes}</p>
         {platform === "twitter" && (
           <div className="w-full mt-4 space-y-4">
-            <Button
-              color="secondary"
-              onPress={handlePostToTwitter}
-              className="w-full bg-purple-600 text-white"
-              isDisabled={isUploading}
-              isLoading={isUploading}
-            >
-              {isUploading ? "Uploading to Twitter..." : "Post to Twitter"}
-            </Button>
-            {isUploading && (
-              <Progress
-                value={uploadProgress}
-                className="w-full"
+            {!isTwitterAuthenticated ? (
+              <Button
                 color="secondary"
-              />
+                onPress={() => navigate("/user/settings")}
+                className="w-full bg-purple-600 text-white"
+                isDisabled={isUploading}
+                isLoading={isUploading}
+              >
+                Connect Twitter Account
+              </Button>
+            ) : (
+              <div>
+                <Button
+                  color="secondary"
+                  onPress={handlePostToTwitter}
+                  className="w-full bg-purple-600 text-white"
+                  isDisabled={isUploading}
+                  isLoading={isUploading}
+                >
+                  {isUploading ? "Uploading to Twitter..." : "Post to Twitter"}
+                </Button>
+                {isUploading && (
+                  <Progress
+                    value={uploadProgress}
+                    className="w-full"
+                    color="secondary"
+                  />
+                )}
+              </div>
             )}
           </div>
         )}

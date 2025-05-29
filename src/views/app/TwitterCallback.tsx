@@ -29,7 +29,7 @@ const TwitterCallback = () => {
 
           localStorage.setItem("oauth_data", JSON.stringify(oauthData));
           setStatus("success");
-          navigate("/user/settings");
+          navigate("/user/twitter");
         })
         .catch((error) => {
           console.error("Error exchanging tokens:", error);

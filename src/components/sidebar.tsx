@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  HomeIcon,
   Settings,
   LogOut,
   VideoIcon,
@@ -11,12 +10,14 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { FaTwitter, FaYoutube } from "react-icons/fa6";
 
 const navItems = [
-  { path: "/user/home", icon: HomeIcon, label: "Statistics" },
+  { path: "/user/home", icon: FaYoutube, label: "YouTube Stats" },
+  { path: "/user/twitter", icon: FaTwitter, label: "Twitter Stats" },
   { path: "/user/my-videos", icon: VideoIcon, label: "My Videos" },
   { path: "/user/settings", icon: Settings, label: "Settings" },
-  { path: "/user/test", icon: Settings, label: "test" },
+  { path: "/user/test", icon: Settings, label: "Twitter Stats" },
 ];
 
 export default function Sidebar() {

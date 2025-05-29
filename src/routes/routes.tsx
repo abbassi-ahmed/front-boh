@@ -10,8 +10,9 @@ import DefaultLayout from "../layouts/default";
 import MyVideos from "../views/app/my-videos";
 import VideoDetailsPage from "../views/app/videoDetailPage";
 import Settings from "../views/app/settings";
-import TwitterPost from "../views/app/test";
 import TwitterCallback from "../views/app/TwitterCallback";
+import TwitterDashboard from "../views/app/twitterDashboard";
+import TwitterTest from "../views/app/test";
 
 const AppRoutes = () => {
   return (
@@ -46,8 +47,9 @@ const AppRoutes = () => {
             <Route path="my-videos" element={<MyVideos />} />
             <Route path="settings" element={<Settings />} />
             <Route path="video-detail/:id" element={<VideoDetailsPage />} />
-            <Route path="test" element={<TwitterPost />} />
+            <Route path="twitter" element={<TwitterDashboard />} />
             <Route path="twitter-callback" element={<TwitterCallback />} />
+            <Route path="test" element={<TwitterTest />} />
 
             <Route index element={<HomePage />} />
           </Route>

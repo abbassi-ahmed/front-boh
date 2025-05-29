@@ -120,7 +120,7 @@ export default function Statistics() {
           },
         }
       );
-
+      console.log("dd", res.data);
       const channelRes = await axios.get(
         "https://www.googleapis.com/youtube/v3/channels",
         {

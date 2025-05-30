@@ -60,6 +60,7 @@ const platformIcons = {
   instagram: <FaInstagram size={24} className="text-pink-500" />,
   twitter: <FaTwitter size={24} className="text-purple-500" />,
 };
+
 function PrivacySelector({
   value,
   onChange,
@@ -99,12 +100,71 @@ function PrivacySelector({
     </div>
   );
 }
+
+function ScheduleSelector({
+  value,
+  onChange,
+  bestHours,
+  bestDays,
+  privacyStatus,
+}: {
+  value: string | null;
+  onChange: (value: string | null) => void;
+  bestHours: string;
+  bestDays: string[];
+  privacyStatus: "public" | "unlisted" | "private";
+}) {
+  const [customTime, setCustomTime] = useState<string>(
+    value ? new Date(value).toISOString().slice(0, 16) : ""
+  );
+
+  const handleCustomTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setCustomTime(newValue);
+    onChange(newValue ? new Date(newValue).toISOString() : null);
+  };
+
+  if (privacyStatus !== "private") {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-col gap-2 mb-4">
+      <label className="text-sm font-medium text-gray-300">
+        Schedule Posting
+      </label>
+
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <input
+            type="datetime-local"
+            value={customTime}
+            onChange={handleCustomTimeChange}
+            className="bg-gray-700 text-white rounded px-3 py-2 text-sm"
+            min={new Date().toISOString().slice(0, 16)}
+          />
+          <span className="text-xs text-gray-400">Custom Time</span>
+        </div>
+      </div>
+
+      {value && (
+        <p className="text-xs text-gray-400">
+          Scheduled for: {new Date(value).toLocaleString()}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function VideoDetailsPage() {
   const { id } = useParams();
   const [videoData, setVideoData] = useState<VideoData | null>(null);
   const [youtubeAccessToken, setYoutubeAccessToken] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [scheduledPublishTime, setScheduledPublishTime] = useState<
+    string | null
+  >(null);
   const [userData, setUserData] = useState<any>(null);
   const navigate = useNavigate();
 
@@ -113,6 +173,7 @@ export default function VideoDetailsPage() {
   const [privacyStatus, setPrivacyStatus] = useState<
     "public" | "unlisted" | "private"
   >("public");
+
   useEffect(() => {
     if (id) data.submitRequest({}, `assembly/${id}`);
   }, [id]);
@@ -124,6 +185,7 @@ export default function VideoDetailsPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [activePlatform, setActivePlatform] = useState("youtube");
   const videoRef = useRef<HTMLVideoElement>(null);
+
   const togglePlay = () => {
     if (!videoRef.current) return;
 
@@ -137,6 +199,7 @@ export default function VideoDetailsPage() {
         .catch((error) => console.error("Error playing video:", error));
     }
   };
+
   useEffect(() => {
     const storedOauthData = JSON.parse(
       localStorage.getItem("oauth_data") || "{}"
@@ -147,12 +210,14 @@ export default function VideoDetailsPage() {
       setUserData(storedOauthData);
     }
   }, []);
+
   useEffect(() => {
     const token = localStorage.getItem("youtubeToken");
     if (token) {
       setYoutubeAccessToken(token);
     }
   }, []);
+
   const handleYoutubeLogin = async () => {
     navigate("/user/settings");
   };
@@ -171,6 +236,9 @@ export default function VideoDetailsPage() {
       },
       status: {
         privacyStatus,
+        ...(scheduledPublishTime && privacyStatus === "private"
+          ? { publishAt: scheduledPublishTime }
+          : {}),
       },
     };
 
@@ -213,7 +281,7 @@ export default function VideoDetailsPage() {
         )
       ) {
         alert(
-          "Upload limit reached: Your YouTube account has exceeded its daily upload quota. Please try again tomorrow ."
+          "Upload limit reached: Your YouTube account has exceeded its daily upload quota. Please try again tomorrow."
         );
       } else {
         alert("Failed to upload video");
@@ -222,11 +290,12 @@ export default function VideoDetailsPage() {
       setIsUploading(false);
     }
   };
-  if (data.loaded || !videoData) {
+
+  if (!videoData) {
     return (
       <div className="flex flex-col justify-center text-center">
-        <Spinner size="lg" />;
-        <p className=" text-lg text-purple-800">Loading...</p>
+        <Spinner size="lg" />
+        <p className="text-lg text-purple-800">Loading...</p>
       </div>
     );
   }
@@ -252,6 +321,7 @@ export default function VideoDetailsPage() {
       setIsUploading(false);
     }
   };
+
   const renderPlatformPreview = () => {
     switch (activePlatform) {
       case "youtube":
@@ -515,6 +585,9 @@ export default function VideoDetailsPage() {
                         privacyStatus={privacyStatus}
                         setPrivacyStatus={setPrivacyStatus}
                         handlePostToTwitter={handlePostToTwitter}
+                        scheduledPublishTime={scheduledPublishTime}
+                        setScheduledPublishTime={setScheduledPublishTime}
+                        videoData={videoData}
                       />
                     </Tab>
                   ))}
@@ -587,14 +660,17 @@ interface PlatformCardProps {
   youtubeAccessToken: string;
   isUploading: boolean;
   uploadProgress: number;
-  handleYoutubeLogin: any;
-  uploadToYouTube: any;
+  handleYoutubeLogin: () => void;
+  uploadToYouTube: () => void;
   privacyStatus: "public" | "unlisted" | "private";
-  handlePostToTwitter: any;
+  handlePostToTwitter: () => void;
   isTwitterAuthenticated: boolean;
   setPrivacyStatus: React.Dispatch<
     React.SetStateAction<"public" | "unlisted" | "private">
   >;
+  scheduledPublishTime: string | null;
+  setScheduledPublishTime: React.Dispatch<React.SetStateAction<string | null>>;
+  videoData: VideoData;
 }
 
 function PlatformCard({
@@ -609,6 +685,9 @@ function PlatformCard({
   handlePostToTwitter,
   setPrivacyStatus,
   isTwitterAuthenticated,
+  scheduledPublishTime,
+  setScheduledPublishTime,
+  videoData,
 }: PlatformCardProps) {
   const navigate = useNavigate();
   const platformColors = {
@@ -706,6 +785,14 @@ function PlatformCard({
             <PrivacySelector
               value={privacyStatus}
               onChange={setPrivacyStatus}
+            />
+
+            <ScheduleSelector
+              value={scheduledPublishTime}
+              onChange={setScheduledPublishTime}
+              bestHours={videoData.youtube.posting_time.best_hours}
+              bestDays={videoData.youtube.posting_time.best_days}
+              privacyStatus={privacyStatus}
             />
 
             {!youtubeAccessToken ? (

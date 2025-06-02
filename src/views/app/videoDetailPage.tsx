@@ -104,14 +104,10 @@ function PrivacySelector({
 function ScheduleSelector({
   value,
   onChange,
-  bestHours,
-  bestDays,
   privacyStatus,
 }: {
   value: string | null;
   onChange: (value: string | null) => void;
-  bestHours: string;
-  bestDays: string[];
   privacyStatus: "public" | "unlisted" | "private";
 }) {
   const [customTime, setCustomTime] = useState<string>(
@@ -790,8 +786,6 @@ function PlatformCard({
             <ScheduleSelector
               value={scheduledPublishTime}
               onChange={setScheduledPublishTime}
-              bestHours={videoData.youtube.posting_time.best_hours}
-              bestDays={videoData.youtube.posting_time.best_days}
               privacyStatus={privacyStatus}
             />
 

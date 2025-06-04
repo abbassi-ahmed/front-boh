@@ -17,7 +17,6 @@ const navItems = [
   { path: "/user/twitter", icon: FaTwitter, label: "Twitter Stats" },
   { path: "/user/my-videos", icon: VideoIcon, label: "My Videos" },
   { path: "/user/settings", icon: Settings, label: "Settings" },
-  { path: "/user/test", icon: Settings, label: "Twitter Stats" },
 ];
 
 export default function Sidebar() {

@@ -8,51 +8,19 @@ import {
   Button,
   Tabs,
   Tab,
-  Chip,
   Divider,
   Spinner,
-  Progress,
   addToast,
 } from "@heroui/react";
-import { Play, Pause, Clock, Calendar, Tag, Globe, Info } from "lucide-react";
+import { Play, Pause, Info } from "lucide-react";
 import { formatDate } from "../../utils/formatDate";
 import { FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa6";
 import { FaFacebook } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAxios } from "../../hooks/fetch-api.hook";
 import axios from "axios";
-
-interface PostingTime {
-  notes: string;
-  timezone: string;
-  best_days: string[];
-  best_hours: string;
-}
-
-interface PlatformData {
-  tags: string[];
-  title: string;
-  description: string;
-  posting_time: PostingTime;
-}
-
-interface CrossPlatformTips {
-  general_advice: string;
-  recommendations: string[];
-}
-
-interface VideoData {
-  id: number;
-  createdAt: string;
-  modifiedAt: string;
-  originalAudioUrl: string;
-  transcript: string;
-  youtube: PlatformData;
-  facebook: PlatformData;
-  instagram: PlatformData;
-  twitter: PlatformData;
-  cross_platform_tips: CrossPlatformTips;
-}
+import { VideoData } from "../../types/types";
+import { PlatformCard } from "../../components/PlatformCard";
 
 const platformIcons = {
   youtube: <FaYoutube size={24} className="text-red-500" />,
@@ -60,97 +28,6 @@ const platformIcons = {
   instagram: <FaInstagram size={24} className="text-pink-500" />,
   twitter: <FaTwitter size={24} className="text-purple-500" />,
 };
-
-function PrivacySelector({
-  value,
-  onChange,
-}: {
-  value: "public" | "unlisted" | "private";
-  onChange: (value: "public" | "unlisted" | "private") => void;
-}) {
-  return (
-    <div className="flex flex-col gap-2 mb-4">
-      <label className="text-sm font-medium text-gray-300">
-        Privacy Settings
-      </label>
-      <div className="flex gap-2">
-        {[
-          { value: "public", label: "Public", color: "bg-green-500/20" },
-          { value: "unlisted", label: "Unlisted", color: "bg-yellow-500/20" },
-          { value: "private", label: "Private", color: "bg-red-500/20" },
-        ].map((option) => (
-          <Button
-            key={option.value}
-            onPress={() => onChange(option.value as any)}
-            variant={value === option.value ? "solid" : "flat"}
-            className={`${
-              value === option.value ? option.color : "bg-gray-700/50"
-            } text-white`}
-            size="sm"
-          >
-            {option.label}
-          </Button>
-        ))}
-      </div>
-      <p className="text-xs text-gray-400">
-        {value === "public" && "Anyone can see this video"}
-        {value === "unlisted" && "Only people with the link can see this video"}
-        {value === "private" && "Only you can see this video"}
-      </p>
-    </div>
-  );
-}
-
-function ScheduleSelector({
-  value,
-  onChange,
-  privacyStatus,
-}: {
-  value: string | null;
-  onChange: (value: string | null) => void;
-  privacyStatus: "public" | "unlisted" | "private";
-}) {
-  const [customTime, setCustomTime] = useState<string>(
-    value ? new Date(value).toISOString().slice(0, 16) : ""
-  );
-
-  const handleCustomTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setCustomTime(newValue);
-    onChange(newValue ? new Date(newValue).toISOString() : null);
-  };
-
-  if (privacyStatus !== "private") {
-    return null;
-  }
-
-  return (
-    <div className="flex flex-col gap-2 mb-4">
-      <label className="text-sm font-medium text-gray-300">
-        Schedule Posting
-      </label>
-
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <input
-            type="datetime-local"
-            value={customTime}
-            onChange={handleCustomTimeChange}
-            className="bg-gray-700 text-white rounded px-3 py-2 text-sm"
-            min={new Date().toISOString().slice(0, 16)}
-          />
-          <span className="text-xs text-gray-400">Custom Time</span>
-        </div>
-      </div>
-
-      {value && (
-        <p className="text-xs text-gray-400">
-          Scheduled for: {new Date(value).toLocaleString()}
-        </p>
-      )}
-    </div>
-  );
-}
 
 export default function VideoDetailsPage() {
   const { id } = useParams();
@@ -161,7 +38,6 @@ export default function VideoDetailsPage() {
   const [scheduledPublishTime, setScheduledPublishTime] = useState<
     string | null
   >(null);
-  const [userData, setUserData] = useState<any>(null);
   const navigate = useNavigate();
 
   const [isUploading, setIsUploading] = useState(false);
@@ -172,6 +48,7 @@ export default function VideoDetailsPage() {
 
   useEffect(() => {
     if (id) data.submitRequest({}, `assembly/${id}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   useEffect(() => {
@@ -203,7 +80,6 @@ export default function VideoDetailsPage() {
 
     if (storedOauthData.oauth_token && storedOauthData.user_id) {
       setIsAuthenticated(true);
-      setUserData(storedOauthData);
     }
   }, []);
 
@@ -304,7 +180,7 @@ export default function VideoDetailsPage() {
           text: `${videoData.twitter.title} description: ${videoData.twitter.description}`,
           videoUrl: videoData.originalAudioUrl,
         })
-        .then((res) => {
+        .then(() => {
           addToast({
             title: "Success",
             description: "Tweet posted successfully!",
@@ -568,6 +444,10 @@ export default function VideoDetailsPage() {
                     >
                       <PlatformCard
                         platform={platform}
+                        refetch={() => {
+                          data.submitRequest({}, `assembly/${videoData.id}`);
+                        }}
+                        id={videoData.id}
                         data={
                           videoData[platform as keyof typeof videoData] as any
                         }
@@ -583,7 +463,6 @@ export default function VideoDetailsPage() {
                         handlePostToTwitter={handlePostToTwitter}
                         scheduledPublishTime={scheduledPublishTime}
                         setScheduledPublishTime={setScheduledPublishTime}
-                        videoData={videoData}
                       />
                     </Tab>
                   ))}
@@ -636,190 +515,5 @@ export default function VideoDetailsPage() {
         </Card>
       </motion.div>
     </div>
-  );
-}
-
-interface PlatformCardProps {
-  platform: string;
-  data: {
-    title: string;
-    description: string;
-    tags: string[];
-    posting_time: {
-      notes: string;
-      timezone: string;
-      best_days: string[];
-      best_hours: string;
-    };
-  };
-  setYoutubeAccessToken: React.Dispatch<React.SetStateAction<string>>;
-  youtubeAccessToken: string;
-  isUploading: boolean;
-  uploadProgress: number;
-  handleYoutubeLogin: () => void;
-  uploadToYouTube: () => void;
-  privacyStatus: "public" | "unlisted" | "private";
-  handlePostToTwitter: () => void;
-  isTwitterAuthenticated: boolean;
-  setPrivacyStatus: React.Dispatch<
-    React.SetStateAction<"public" | "unlisted" | "private">
-  >;
-  scheduledPublishTime: string | null;
-  setScheduledPublishTime: React.Dispatch<React.SetStateAction<string | null>>;
-  videoData: VideoData;
-}
-
-function PlatformCard({
-  platform,
-  data,
-  youtubeAccessToken,
-  isUploading,
-  uploadProgress,
-  handleYoutubeLogin,
-  uploadToYouTube,
-  privacyStatus,
-  handlePostToTwitter,
-  setPrivacyStatus,
-  isTwitterAuthenticated,
-  scheduledPublishTime,
-  setScheduledPublishTime,
-  videoData,
-}: PlatformCardProps) {
-  const navigate = useNavigate();
-  const platformColors = {
-    youtube: "bg-red-500/10 border-red-500/30 text-red-400",
-    facebook: "bg-blue-500/10 border-blue-500/30 text-blue-400",
-    instagram: "bg-pink-500/10 border-pink-500/30 text-pink-400",
-    twitter: "bg-purple-500/10 border-purple-500/30 text-purple-400",
-  };
-
-  const colorClass = platformColors[platform as keyof typeof platformColors];
-
-  return (
-    <Card className={`w-full ${colorClass} border backdrop-blur-sm`}>
-      <CardHeader className="pb-0 pt-4 px-4 flex-col items-start">
-        <h3 className="text-xl font-bold">{data.title}</h3>
-        <div className="flex flex-wrap gap-1 mt-2">
-          {data.tags.map((tag, index) => (
-            <Chip
-              key={index}
-              size="sm"
-              variant="flat"
-              startContent={<Tag size={12} />}
-              className={`${colorClass} text-xs`}
-            >
-              {tag}
-            </Chip>
-          ))}
-        </div>
-      </CardHeader>
-      <CardBody className="py-2 px-4">
-        <p className="text-sm text-gray-300">{data.description}</p>
-      </CardBody>
-      <Divider />
-      <CardFooter className="flex-col items-start gap-2 px-4 py-3">
-        <h4 className="text-sm font-semibold flex items-center gap-2">
-          <Clock size={14} /> Best Posting Time
-        </h4>
-        <div className="grid grid-cols-2 gap-2 w-full text-xs">
-          <div className="flex items-center gap-1">
-            <Calendar size={12} />
-            <span className="text-gray-300">
-              {data.posting_time.best_days.join(", ")}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Clock size={12} />
-            <span className="text-gray-300">
-              {data.posting_time.best_hours}
-            </span>
-          </div>
-          <div className="flex items-center gap-1 col-span-2">
-            <Globe size={12} />
-            <span className="text-gray-300">{data.posting_time.timezone}</span>
-          </div>
-        </div>
-
-        <h4 className="text-xl font-bold">Posting Notes</h4>
-        <p className="text-sm text-gray-300">{data.posting_time.notes}</p>
-        {platform === "twitter" && (
-          <div className="w-full mt-4 space-y-4">
-            {!isTwitterAuthenticated ? (
-              <Button
-                color="secondary"
-                onPress={() => navigate("/user/settings")}
-                className="w-full bg-purple-600 text-white"
-                isDisabled={isUploading}
-                isLoading={isUploading}
-              >
-                Connect Twitter Account
-              </Button>
-            ) : (
-              <div>
-                <Button
-                  color="secondary"
-                  onPress={handlePostToTwitter}
-                  className="w-full bg-purple-600 text-white"
-                  isDisabled={isUploading}
-                  isLoading={isUploading}
-                >
-                  {isUploading ? "Uploading to Twitter..." : "Post to Twitter"}
-                </Button>
-                {isUploading && (
-                  <Progress
-                    value={uploadProgress}
-                    className="w-full"
-                    color="secondary"
-                  />
-                )}
-              </div>
-            )}
-          </div>
-        )}
-        {platform === "youtube" && (
-          <div className="w-full mt-4 space-y-4">
-            <PrivacySelector
-              value={privacyStatus}
-              onChange={setPrivacyStatus}
-            />
-
-            <ScheduleSelector
-              value={scheduledPublishTime}
-              onChange={setScheduledPublishTime}
-              privacyStatus={privacyStatus}
-            />
-
-            {!youtubeAccessToken ? (
-              <Button
-                onPress={handleYoutubeLogin}
-                color="danger"
-                className="w-full bg-red-600 text-white"
-              >
-                Connect YouTube Account
-              </Button>
-            ) : (
-              <div className="space-y-2">
-                <Button
-                  onPress={uploadToYouTube}
-                  color="danger"
-                  className="w-full bg-red-600 text-white"
-                  isDisabled={isUploading}
-                  isLoading={isUploading}
-                >
-                  {isUploading ? "Uploading..." : "Upload to YouTube"}
-                </Button>
-                {isUploading && (
-                  <Progress
-                    value={uploadProgress}
-                    className="w-full"
-                    color="danger"
-                  />
-                )}
-              </div>
-            )}
-          </div>
-        )}
-      </CardFooter>
-    </Card>
   );
 }

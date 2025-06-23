@@ -55,15 +55,6 @@ interface YoutubeProfile {
   };
 }
 
-interface TwitterProfile {
-  username: string;
-  followers: number;
-  likes: number;
-  videos: number;
-  verified: boolean;
-  profilePic: string;
-}
-
 export default function SocialSettings() {
   const { user } = useAuth();
   const { userData } = useAxios(
@@ -78,7 +69,6 @@ export default function SocialSettings() {
   const [facebookProfile, setFacebookProfile] =
     useState<FacebookProfile | null>(null);
   const [authUrl, setAuthUrl] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [twitterProfile, setTwitterProfile] = useState<any>(null);
   const [instagramProfile, setInstagramProfile] =
     useState<InstagramProfile | null>(null);
@@ -267,7 +257,6 @@ export default function SocialSettings() {
     );
 
     if (storedOauthData.oauth_token && storedOauthData.user_id) {
-      setIsAuthenticated(true);
       setTwitterProfile(storedOauthData);
     }
   }, []);
@@ -404,7 +393,6 @@ export default function SocialSettings() {
     } else if (platform === "twitter") {
       setTwitterProfile(null);
       localStorage.removeItem("oauth_data");
-      setIsAuthenticated(false);
     }
   };
 

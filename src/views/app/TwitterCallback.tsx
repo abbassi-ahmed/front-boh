@@ -1,13 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const TwitterCallback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [status, setStatus] = useState<"loading" | "success" | "error">(
-    "loading"
-  );
 
   useEffect(() => {
     const oauthToken = searchParams.get("oauth_token");
@@ -28,15 +25,11 @@ const TwitterCallback = () => {
           };
 
           localStorage.setItem("oauth_data", JSON.stringify(oauthData));
-          setStatus("success");
           navigate("/user/twitter");
         })
         .catch((error) => {
           console.error("Error exchanging tokens:", error);
-          setStatus("error");
         });
-    } else {
-      setStatus("error");
     }
   }, [searchParams, navigate]);
 

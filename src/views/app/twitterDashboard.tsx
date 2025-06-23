@@ -70,7 +70,6 @@ export default function TwitterDashboard() {
   const [isDummyData, setIsDummyData] = useState(false);
   const [authUrl, setAuthUrl] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userData, setUserData] = useState<any>(null);
 
   const setDummyData = () => {
     setMetrics(dummyData);
@@ -100,7 +99,6 @@ export default function TwitterDashboard() {
 
     if (storedOauthData.oauth_token && storedOauthData.user_id) {
       setIsAuthenticated(true);
-      setUserData(storedOauthData);
     }
   }, []);
 
@@ -251,7 +249,6 @@ export default function TwitterDashboard() {
                 onPress={() => {
                   localStorage.removeItem("oauth_data");
                   setIsAuthenticated(false);
-                  setUserData(null);
                 }}
                 color="danger"
                 variant="flat"

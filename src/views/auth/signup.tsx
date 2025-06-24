@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import { useAxios } from "../../hooks/fetch-api.hook";
 import { addToast } from "@heroui/react";
+import { Link, useNavigate } from "react-router-dom";
 
 function Signup() {
   const [form, setForm] = useState({
@@ -15,7 +16,7 @@ function Signup() {
     confirmPassword: false,
   });
   const { data } = useAxios("users", "POST", {}, "data", false);
-
+  const router = useNavigate();
   const [isFormValid, setIsFormValid] = useState(false);
   const [inputErrors, setInputErrors] = useState({
     name: "",
@@ -79,6 +80,7 @@ function Signup() {
         description: "Log in to your account to continue.",
         color: "success",
       });
+      router("/");
     } else if (data.error) {
       console.error("Login failed:", data.error);
     }
@@ -212,12 +214,13 @@ function Signup() {
 
           <p className="text-center text-zinc-400">
             Already have an account?{" "}
-            <button
+            <Link
+              to={"/"}
               type="button"
               className="text-purple-400 hover:text-purple-300"
             >
               Sign in
-            </button>
+            </Link>
           </p>
         </form>
       </div>

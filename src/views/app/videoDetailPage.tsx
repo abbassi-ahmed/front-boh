@@ -176,7 +176,7 @@ export default function VideoDetailsPage() {
     try {
       setIsUploading(true);
       await axios
-        .post("http://localhost:3000/api/twitter/post", {
+        .post("https://karriery-tech.com/api/twitter/post", {
           text: `${videoData.twitter.title} description: ${videoData.twitter.description}`,
           videoUrl: videoData.originalAudioUrl,
         })

@@ -80,7 +80,7 @@ export default function TwitterDashboard() {
     const initiateTwitterAuth = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3000/api/twitter/test"
+          "https://karriery-tech.com/api/twitter/test"
         );
         setAuthUrl(response.data.data.url);
       } catch (err) {
@@ -115,7 +115,7 @@ export default function TwitterDashboard() {
       try {
         if (parsedUser?.user_id) {
           const response = await axios.get(
-            `http://localhost:3000/api/twitter/public-metrics/${parsedUser.user_id}`
+            `https://karriery-tech.com/api/twitter/public-metrics/${parsedUser.user_id}`
           );
           if (
             response.data.public_metrics?.error ||

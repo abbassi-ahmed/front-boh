@@ -109,15 +109,6 @@ function Login() {
             </div>
           </div>
 
-          <div className="flex justify-end">
-            <button
-              type="button"
-              className="text-sm text-purple-400 hover:text-purple-300"
-            >
-              Forgot password?
-            </button>
-          </div>
-
           <button
             type="submit"
             disabled={!isFormValid}

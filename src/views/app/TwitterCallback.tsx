@@ -12,7 +12,7 @@ const TwitterCallback = () => {
 
     if (oauthToken && oauthVerifier) {
       axios
-        .post("http://localhost:3000/api/twitter/callback", {
+        .post("https://karriery-tech.com/api/twitter/callback", {
           oauth_token: oauthToken,
           oauth_verifier: oauthVerifier,
         })

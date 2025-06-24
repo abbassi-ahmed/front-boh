@@ -62,7 +62,7 @@ export default function MyVideos() {
     setIsProcessing(true);
     try {
       const transcriptionResponse = await axios.post(
-        "http://localhost:3000/api/assembly/transcribe",
+        "https://karriery-tech.com/api/assembly/transcribe",
         {
           fileUrl: uploadedVideo.url,
         }
@@ -97,7 +97,7 @@ export default function MyVideos() {
       };
 
       await axios
-        .post("http://localhost:3000/api/assembly", saveData)
+        .post("https://karriery-tech.com/api/assembly", saveData)
         .then(() => {
           addToast({
             title: "Saved",

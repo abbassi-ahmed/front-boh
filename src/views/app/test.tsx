@@ -11,7 +11,7 @@ export default function TwitterTest() {
     const initiateTwitterAuth = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3000/api/twitter/test"
+          "https://karriery-tech.com/api/twitter/test"
         );
         setAuthUrl(response.data.data.url);
       } catch (err) {

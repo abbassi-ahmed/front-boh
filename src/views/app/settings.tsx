@@ -2,7 +2,7 @@ import { Card, Button, Avatar, Chip, Divider } from "@heroui/react";
 import { useEffect, useState } from "react";
 import { FaFacebook, FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa6";
 import { MdVerified } from "react-icons/md";
-import { useAxios } from "../../hooks/fetch-api.hook";
+import { baseUrl, useAxios } from "../../hooks/fetch-api.hook";
 import { useAuth } from "../../context/AuthContext";
 import { useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
@@ -240,9 +240,7 @@ export default function SocialSettings() {
   useEffect(() => {
     const initiateTwitterAuth = async () => {
       try {
-        const response = await axios.get(
-          "https://karriery-tech.com/api/twitter/test"
-        );
+        const response = await axios.get(`${baseUrl}twitter/test`);
         setAuthUrl(response.data.data.url);
       } catch (err) {
         console.error(err);

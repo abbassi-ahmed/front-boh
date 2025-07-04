@@ -8,6 +8,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  MessageCircle,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { FaTwitter, FaYoutube } from "react-icons/fa6";
@@ -17,6 +18,8 @@ const navItems = [
   { path: "/user/twitter", icon: FaTwitter, label: "Twitter Stats" },
   { path: "/user/my-videos", icon: VideoIcon, label: "My Videos" },
   { path: "/user/settings", icon: Settings, label: "Settings" },
+  { path: "/user/chat", icon: MessageCircle, label: "Chat" },
+  { path: "/user/test", icon: Settings, label: "Settings" },
 ];
 
 export default function Sidebar() {

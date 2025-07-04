@@ -13,6 +13,7 @@ import Settings from "../views/app/settings";
 import TwitterCallback from "../views/app/TwitterCallback";
 import TwitterDashboard from "../views/app/twitterDashboard";
 import TwitterTest from "../views/app/test";
+import Chat from "../views/app/chat";
 
 const AppRoutes = () => {
   return (
@@ -50,6 +51,7 @@ const AppRoutes = () => {
             <Route path="twitter" element={<TwitterDashboard />} />
             <Route path="twitter-callback" element={<TwitterCallback />} />
             <Route path="test" element={<TwitterTest />} />
+            <Route path="chat" element={<Chat />} />
 
             <Route index element={<HomePage />} />
           </Route>

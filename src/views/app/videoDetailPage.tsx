@@ -17,7 +17,7 @@ import { formatDate } from "../../utils/formatDate";
 import { FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa6";
 import { FaFacebook } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
-import { useAxios } from "../../hooks/fetch-api.hook";
+import { baseUrl, useAxios } from "../../hooks/fetch-api.hook";
 import axios from "axios";
 import { VideoData } from "../../types/types";
 import { PlatformCard } from "../../components/PlatformCard";
@@ -176,7 +176,7 @@ export default function VideoDetailsPage() {
     try {
       setIsUploading(true);
       await axios
-        .post("https://karriery-tech.com/api/twitter/post", {
+        .post(`${baseUrl}twitter/post`, {
           text: `${videoData.twitter.title} description: ${videoData.twitter.description}`,
           videoUrl: videoData.originalAudioUrl,
         })

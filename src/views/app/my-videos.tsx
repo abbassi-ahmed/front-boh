@@ -6,7 +6,7 @@ import { formatDuration } from "../../utils/formatDuration";
 import RenderVideoSection from "../../components/renderVideoSection";
 import RenderVideoLibrary from "../../components/renderVideoLibrary";
 import { addToast } from "@heroui/react";
-import { useAxios } from "../../hooks/fetch-api.hook";
+import { baseUrl, useAxios } from "../../hooks/fetch-api.hook";
 import RenderPlatformTabs from "../../components/renderPlatformTabs";
 
 export type PlatformKey = "youtube" | "twitter" | "facebook" | "instagram";
@@ -62,7 +62,7 @@ export default function MyVideos() {
     setIsProcessing(true);
     try {
       const transcriptionResponse = await axios.post(
-        "https://karriery-tech.com/api/assembly/transcribe",
+        `${baseUrl}assembly/transcribe`,
         {
           fileUrl: uploadedVideo.url,
         }
@@ -96,16 +96,14 @@ export default function MyVideos() {
         cross_platform_tips: generatedContent.cross_platform_tips,
       };
 
-      await axios
-        .post("https://karriery-tech.com/api/assembly", saveData)
-        .then(() => {
-          addToast({
-            title: "Saved",
-            description: "Content Saved successfully",
-            color: "success",
-          });
-          data.refreshData();
+      await axios.post(`${baseUrl}assembly`, saveData).then(() => {
+        addToast({
+          title: "Saved",
+          description: "Content Saved successfully",
+          color: "success",
         });
+        data.refreshData();
+      });
     } catch (error) {
       console.error("Error saving content:", error);
       alert("Failed to save content. Please try again.");

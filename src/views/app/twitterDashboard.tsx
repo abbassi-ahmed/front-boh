@@ -23,6 +23,7 @@ import {
   LineChart,
   Line,
 } from "recharts";
+import { baseUrl } from "../../hooks/fetch-api.hook";
 
 interface TwitterMetrics {
   name: string;
@@ -79,9 +80,7 @@ export default function TwitterDashboard() {
   useEffect(() => {
     const initiateTwitterAuth = async () => {
       try {
-        const response = await axios.get(
-          "https://karriery-tech.com/api/twitter/test"
-        );
+        const response = await axios.get(`${baseUrl}twitter/test`);
         setAuthUrl(response.data.data.url);
       } catch (err) {
         setError("Failed to initiate Twitter authentication");
@@ -115,7 +114,7 @@ export default function TwitterDashboard() {
       try {
         if (parsedUser?.user_id) {
           const response = await axios.get(
-            `https://karriery-tech.com/api/twitter/public-metrics/${parsedUser.user_id}`
+            `${baseUrl}twitter/public-metrics/${parsedUser.user_id}`
           );
           if (
             response.data.public_metrics?.error ||

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { baseUrl } from "../../hooks/fetch-api.hook";
 
 const TwitterCallback = () => {
   const [searchParams] = useSearchParams();
@@ -12,7 +13,7 @@ const TwitterCallback = () => {
 
     if (oauthToken && oauthVerifier) {
       axios
-        .post("https://karriery-tech.com/api/twitter/callback", {
+        .post(`${baseUrl}twitter/callback`, {
           oauth_token: oauthToken,
           oauth_verifier: oauthVerifier,
         })

@@ -21,7 +21,6 @@ const navItems = [
   { path: "/user/my-videos", icon: VideoIcon, label: "My Videos" },
   { path: "/user/settings", icon: Settings, label: "Settings" },
   { path: "/user/chat", icon: MessageCircle, label: "Chat" },
-  { path: "/user/test", icon: Settings, label: "Settings" },
 ];
 
 export default function Sidebar() {

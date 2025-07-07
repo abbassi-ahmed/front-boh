@@ -10,7 +10,7 @@ const LoginGuard = ({ children }: LoginGuardProps) => {
   const { isAuthenticated } = useAuth();
 
   if (isAuthenticated) {
-    return <Navigate to="/user/home" replace />;
+    return <Navigate to="/user/calendar" replace />;
   }
 
   return children;

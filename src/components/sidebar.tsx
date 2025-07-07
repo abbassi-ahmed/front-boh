@@ -9,11 +9,13 @@ import {
   ChevronLeft,
   ChevronRight,
   MessageCircle,
+  Calendar,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { FaTwitter, FaYoutube } from "react-icons/fa6";
 
 const navItems = [
+  { path: "/user/calendar", icon: Calendar, label: "Calendar" },
   { path: "/user/home", icon: FaYoutube, label: "YouTube Stats" },
   { path: "/user/twitter", icon: FaTwitter, label: "Twitter Stats" },
   { path: "/user/my-videos", icon: VideoIcon, label: "My Videos" },

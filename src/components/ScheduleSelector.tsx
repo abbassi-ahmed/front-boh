@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function ScheduleSelector({
   value,
@@ -12,6 +12,13 @@ function ScheduleSelector({
   const [customTime, setCustomTime] = useState<string>(
     value ? new Date(value).toISOString().slice(0, 16) : ""
   );
+
+  useEffect(() => {
+    if (privacyStatus !== "private") {
+      setCustomTime("");
+      onChange(null);
+    }
+  }, [privacyStatus, onChange]);
 
   const handleCustomTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;

@@ -21,6 +21,7 @@ import { baseUrl, useAxios } from "../../hooks/fetch-api.hook";
 import axios from "axios";
 import { VideoData } from "../../types/types";
 import { PlatformCard } from "../../components/PlatformCard";
+import { useAuth } from "../../context/AuthContext";
 
 const platformIcons = {
   youtube: <FaYoutube size={24} className="text-red-500" />,
@@ -31,6 +32,7 @@ const platformIcons = {
 
 export default function VideoDetailsPage() {
   const { id } = useParams();
+  const { user } = useAuth();
   const [videoData, setVideoData] = useState<VideoData | null>(null);
   const [youtubeAccessToken, setYoutubeAccessToken] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -143,6 +145,17 @@ export default function VideoDetailsPage() {
           },
         }
       );
+      const date = new Date(scheduledPublishTime || new Date());
+      const time = date.toTimeString().slice(0, 8);
+      const dateString = date.toISOString().slice(0, 10);
+
+      await axios.post(`${baseUrl}posted-event`, {
+        userId: user?.id,
+        title: videoData.youtube.title,
+        type: "youtube",
+        date: dateString,
+        time: time,
+      });
 
       window.open(`https://youtube.com/watch?v=${response.data.id}`, "_blank");
     } catch (error: any) {
@@ -180,7 +193,18 @@ export default function VideoDetailsPage() {
           text: `${videoData.twitter.title} description: ${videoData.twitter.description}`,
           videoUrl: videoData.originalAudioUrl,
         })
-        .then(() => {
+        .then(async () => {
+          const date = new Date(new Date());
+          const time = date.toTimeString().slice(0, 8);
+          const dateString = date.toISOString().slice(0, 10);
+
+          await axios.post(`${baseUrl}posted-event`, {
+            userId: user?.id,
+            title: videoData.twitter.title,
+            type: "twitter",
+            date: dateString,
+            time: time,
+          });
           addToast({
             title: "Success",
             description: "Tweet posted successfully!",

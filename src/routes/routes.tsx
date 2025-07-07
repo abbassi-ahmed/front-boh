@@ -14,6 +14,7 @@ import TwitterCallback from "../views/app/TwitterCallback";
 import TwitterDashboard from "../views/app/twitterDashboard";
 import TwitterTest from "../views/app/test";
 import Chat from "../views/app/chat";
+import Calendar from "../views/app/calendar";
 
 const AppRoutes = () => {
   return (
@@ -44,6 +45,7 @@ const AppRoutes = () => {
               </AuthGuard>
             }
           >
+            <Route path="calendar" element={<Calendar />} />
             <Route path="home" element={<HomePage />} />
             <Route path="my-videos" element={<MyVideos />} />
             <Route path="settings" element={<Settings />} />

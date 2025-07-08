@@ -12,7 +12,7 @@ import VideoDetailsPage from "../views/app/videoDetailPage";
 import Settings from "../views/app/settings";
 import TwitterCallback from "../views/app/TwitterCallback";
 import TwitterDashboard from "../views/app/twitterDashboard";
-import TwitterTest from "../views/app/test";
+import OCRDemo from "../views/app/ai-gen";
 import Chat from "../views/app/chat";
 import Calendar from "../views/app/calendar";
 
@@ -52,7 +52,7 @@ const AppRoutes = () => {
             <Route path="video-detail/:id" element={<VideoDetailsPage />} />
             <Route path="twitter" element={<TwitterDashboard />} />
             <Route path="twitter-callback" element={<TwitterCallback />} />
-            <Route path="test" element={<TwitterTest />} />
+            <Route path="ocr" element={<OCRDemo />} />
             <Route path="chat" element={<Chat />} />
 
             <Route index element={<HomePage />} />
